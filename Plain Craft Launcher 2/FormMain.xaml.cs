@@ -621,7 +621,7 @@ public partial class FormMain
             if (!isLogShown)
             {
                 Common.FeedbackInfo();
-                Common.Log("请在 https://github.com/PCL-Community/PCL2-CE/issues 提交错误报告，以便于社区解决此问题！（这也有可能是原版 PCL 的问题）");
+                Common.Log("请在 https://github.com/Block-Bring/PCL-CE/issues 提交错误报告，以便于社区解决此问题！（这也有可能是原版 PCL 的问题）");
                 isLogShown = true;
                 Common.ShellOnly(LogWrapper.CurrentLogger.CurrentLogFiles.Last());
             }
