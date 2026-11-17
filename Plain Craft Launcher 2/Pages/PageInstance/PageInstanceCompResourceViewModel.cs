@@ -39,7 +39,7 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
     [ObservableProperty] private bool _showItemList = true;
     [ObservableProperty] private Thickness _listBackMargin = new(0d, 0d, 0d, 14d);
     [ObservableProperty] private string _searchText = "";
-    [ObservableProperty] private bool _showEmpty = true;
+    [ObservableProperty] private bool _showEmpty;
     [ObservableProperty] private bool _showSchematicEmpty;
     [ObservableProperty] private string _emptyTitle = "";
     [ObservableProperty] private string _emptyDescription = "";

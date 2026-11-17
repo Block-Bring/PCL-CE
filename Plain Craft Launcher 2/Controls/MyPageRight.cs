@@ -237,6 +237,12 @@ public class MyPageRight : AdornerDecorator
     #region 事件
 
     /// <summary>
+    ///     加载器运行中进入页面时，等待多久才展示加载卡片（毫秒）。<br />
+    ///     等待期间页面不会显示任何内容，因此加载较快的页面可以覆盖该值以减少空白。
+    /// </summary>
+    protected virtual int PageLoaderWaitDelay => 400;
+
+    /// <summary>
     ///     需要切换到当前页面，并且原本的 Loaded 事件已执行完成。
     ///     需要根据加载器状态，从 Empty 切换到 ContentEnter、LoaderWait、LoaderEnter。
     /// </summary>
@@ -261,7 +267,7 @@ public class MyPageRight : AdornerDecorator
                     else if (_pageLoader.State == LoadState.Loading)
                     {
                         PageState = PageStates.LoaderWait;
-                        Animations.AniStart(Animations.AaCode(PageOnLoaderWaitFinished, 400),
+                        Animations.AniStart(Animations.AaCode(PageOnLoaderWaitFinished, PageLoaderWaitDelay),
                             "PageRight PageChange " + pageUuid);
                     }
                     else // PageLoader.State = LoadState.Failed
@@ -285,7 +291,7 @@ public class MyPageRight : AdornerDecorator
                     else if (_pageLoader.State == LoadState.Loading)
                     {
                         PageState = PageStates.LoaderWait;
-                        Animations.AniStart(Animations.AaCode(PageOnLoaderWaitFinished, 400),
+                        Animations.AniStart(Animations.AaCode(PageOnLoaderWaitFinished, PageLoaderWaitDelay),
                             "PageRight PageChange " + pageUuid);
                     }
                     else // PageLoader.State = LoadState.Failed
@@ -450,9 +456,19 @@ public class MyPageRight : AdornerDecorator
                 }
             case PageStates.LoaderEnter:
                 {
-                    PageState = PageStates.LoaderStayForce;
-                    Animations.AniStart(Animations.AaCode(PageOnLoaderStayFinished, 400),
-                        "PageRight PageChange " + pageUuid);
+                    // 卡片入场动画播放期间加载可能已经结束，此时直接收起，避免再强制停留 400ms
+                    if (_pageLoader is { State: LoadState.Loading or LoadState.Failed })
+                    {
+                        PageState = PageStates.LoaderStayForce;
+                        Animations.AniStart(Animations.AaCode(PageOnLoaderStayFinished, 400),
+                            "PageRight PageChange " + pageUuid);
+                    }
+                    else
+                    {
+                        PageState = PageStates.LoaderExit;
+                        TriggerExitAnimation(_panLoader);
+                    }
+
                     break;
                 }
 

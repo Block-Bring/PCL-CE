@@ -261,6 +261,9 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
         HintService.Show(Hints.Info(Lang.Text("Instance.Left.Refreshing"), log: false));
     }
 
+    /// <summary>资源列表扫描通常在一秒内完成，缩短空白等待，让加载卡片更早出现。</summary>
+    protected override int PageLoaderWaitDelay => 100;
+
     private void LoaderInit()
     {
         PageLoaderInit(Load, PanLoad, PanAllBack, null, LocalComp.CompResourceListLoader,
