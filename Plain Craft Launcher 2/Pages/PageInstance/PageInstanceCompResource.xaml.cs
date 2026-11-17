@@ -154,6 +154,7 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
 
     public void PageOther_Loaded()
     {
+        _vm.RefreshManageRenameVisibility();
         RefreshOnNavigate();
 
         // 非重复加载部分
@@ -1312,6 +1313,109 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
                 }
         }
     }
+
+    private void BtnManageRename_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (_vm.CompType != Comp.CompType.Mod)
+            return;
+        if (Math.Max(0, Config.Download.Comp.NameFormatV2) == 4)
+            return;
+
+        var renameList = new List<(LocalComp.LocalCompFile Entry, string TargetName)>();
+        foreach (var modEntity in LocalComp.CompResourceListLoader.output.ToList())
+        {
+            if (modEntity.IsFolder
+                || modEntity.State == LocalComp.LocalCompFile.LocalFileStatus.Unavailable)
+                continue;
+            if (modEntity.Comp is null || modEntity.CompFile is null)
+                continue;
+            if (_ContainsCjk(modEntity.RawFileName))
+                continue;
+
+            string targetName;
+            try
+            {
+                targetName = Comp.CompFileNameGet(modEntity.Comp, modEntity.CompFile);
+            }
+            catch (Exception ex)
+            {
+                Common.Log(ex, $"生成模组中文文件名失败：{modEntity.RawFileName}");
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(targetName)
+                || targetName == modEntity.RawFileName
+                || !_ContainsCjk(targetName))
+                continue;
+            renameList.Add((modEntity, targetName));
+        }
+
+        if (renameList.Count == 0)
+        {
+            HintService.Show(Hints.Info(Lang.Text("Instance.Resource.RenameWithChinese.None")));
+            return;
+        }
+
+        if ((DialogService.Instance.Show(new TextDialogRequest
+            {
+                Title = Lang.Text("Instance.Resource.RenameWithChinese.Title"),
+                Content = Lang.Text("Instance.Resource.RenameWithChinese.Message", renameList.Count),
+                Buttons = DialogButtons.OkCancel,
+                ForceWait = true
+            }).Result?.Button ?? 0) != 1)
+            return;
+
+        var succeeded = 0;
+        var skipped = 0;
+        foreach (var (entry, targetName) in renameList)
+        {
+            var suffix = entry.path.EndsWithF(".disabled", true)
+                ? ".disabled"
+                : entry.path.EndsWithF(".old", true)
+                    ? ".old"
+                    : "";
+            var directory = Path.GetDirectoryName(entry.path);
+            if (string.IsNullOrEmpty(directory))
+            {
+                skipped++;
+                continue;
+            }
+
+            var newPath = Path.Combine(directory, targetName + suffix);
+            if (string.Equals(newPath, entry.path, StringComparison.OrdinalIgnoreCase)
+                || File.Exists(newPath))
+            {
+                skipped++;
+                continue;
+            }
+
+            try
+            {
+                FileSystem.Rename(entry.path, newPath);
+                succeeded++;
+            }
+            catch (Exception ex)
+            {
+                skipped++;
+                Common.Log(ex, $"重命名模组失败：{entry.FileName}");
+            }
+        }
+
+        if (succeeded == 0)
+            HintService.Show(Hints.Error(Lang.Text("Instance.Resource.RenameWithChinese.Failed")));
+        else if (skipped > 0)
+            HintService.Show(Hints.Info(
+                Lang.Text("Instance.Resource.RenameWithChinese.Partial", succeeded, skipped)));
+        else
+            HintService.Show(Hints.Success(
+                Lang.Text("Instance.Resource.RenameWithChinese.Success", succeeded)));
+
+        if (succeeded > 0)
+            ReloadCompFileList(true);
+    }
+
+    private static bool _ContainsCjk(string text) =>
+        text.Any(c => c is >= '㐀' and <= '鿿' or >= '豈' and <= '﫿');
 
     private static void _AppendEmbeddedForExport(List<string> lines, List<LocalComp.LocalCompFile> mods, int depth)
     {

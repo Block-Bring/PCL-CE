@@ -1111,6 +1111,14 @@
     <sys:String x:Key="Instance.Resource.InstallFromFiles">从文件安装</sys:String>
     <sys:String x:Key="Instance.Resource.List.Loading">正在加载资源列表</sys:String>
     <sys:String x:Key="Instance.Resource.Loading">正在加载资源列表</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese">补全中文名</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.ToolTip">按当前文件名格式，为缺少中文名的模组文件批量补全中文名</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Title">补全模组中文名</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Message">将按当前文件名格式，为 {0} 个缺少中文名的模组文件重命名。&#xA;已包含中文名的文件不会被改动。</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.None">没有需要补全中文名的模组</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Success">已为 {0} 个模组补全中文名</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Partial">已为 {0} 个模组补全中文名，{1} 个因命名冲突或文件被占用被跳过</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Failed">补全中文名失败，请检查文件是否被占用</sys:String>
     <sys:String x:Key="Instance.Resource.Schematic.DownloadMod">下载投影模组</sys:String>
     <sys:String x:Key="Instance.Resource.Schematic.Unavailable.Message">你可能需要先安装投影模组，如果已经安装过了投影模组请先启动一次游戏。&#xA;也可能是你选择错了实例，请点击实例选择按钮切换实例。</sys:String>
     <sys:String x:Key="Instance.Resource.Schematic.Unavailable.Title">该实例不可用投影原理图</sys:String>

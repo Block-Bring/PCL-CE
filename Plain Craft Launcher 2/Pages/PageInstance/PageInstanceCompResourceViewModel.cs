@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.ViewModel;
 using System.Collections.ObjectModel;
@@ -58,6 +59,7 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
     [ObservableProperty] private bool _showManageDownload = true;
     [ObservableProperty] private bool _showHintDownload = true;
     [ObservableProperty] private bool _showManageJarInJar = true;
+    [ObservableProperty] private bool _showManageRename = true;
 
     public Comp.CompType CompType { get; private set; } = Comp.CompType.Mod;
 
@@ -82,7 +84,14 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
         }
 
         if (compType != Comp.CompType.Mod) ShowManageJarInJar = false;
+
+        RefreshManageRenameVisibility();
     }
+
+    /// <summary>“补全中文名”仅在模组页显示，且仅当文件名格式包含中文时可用。</summary>
+    public void RefreshManageRenameVisibility() =>
+        ShowManageRename = CompType == Comp.CompType.Mod
+                           && Math.Max(0, Config.Download.Comp.NameFormatV2) != 4;
 
     public void SetCurrentFolder(string path) => CurrentFolderPath = path;
 

@@ -1072,6 +1072,14 @@
     <sys:String x:Key="Instance.Resource.InstallFromFiles">Install from files</sys:String>
     <sys:String x:Key="Instance.Resource.List.Loading">Loading resource list</sys:String>
     <sys:String x:Key="Instance.Resource.Loading">Loading resource list</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese">Add Chinese names</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.ToolTip">Add Chinese names in bulk to mod files that lack them, using the current file name format</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Title">Add Chinese names to mods</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Message">This will rename {0} mod file(s) that lack a Chinese name, using the current file name format.&#xA;Files that already contain a Chinese name will not be changed.</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.None">No mods need a Chinese name added</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Success">Added Chinese names to {0} mod(s)</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Partial">Added Chinese names to {0} mod(s), skipped {1} due to name conflicts or files in use</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Failed">Failed to add Chinese names. Please check whether the files are in use</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.GoDownload">Go to the download page</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.Message">You need to install a mod loader such as Forge, Fabric, etc. to use mods. Please go to the download page to install one.&#xA;If you have already installed a mod loader, you may have selected the wrong instance. Please switch to the correct instance.</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.SelectInstance">Select an instance</sys:String>

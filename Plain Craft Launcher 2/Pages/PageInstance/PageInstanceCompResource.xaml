@@ -33,6 +33,9 @@
                                                 Margin="0,7,15,0" HorizontalAlignment="Left" />
                                 <local:MyButton x:Name="BtnManageInfoExport" Click="BtnManageInfoExport_Click" MinWidth="110" Text="{loc:Loc Instance.Resource.ExportInfo}" Padding="13,7"
                                                 Margin="0,7,15,0" HorizontalAlignment="Left" ToolTip="{loc:Loc Instance.Resource.ExportInfo.ToolTip}" />
+                                <local:MyButton x:Name="BtnManageRename" Click="BtnManageRename_Click" MinWidth="110" Text="{loc:Loc Instance.Resource.RenameWithChinese}" Padding="13,7"
+                                                Margin="0,7,15,0" HorizontalAlignment="Left" ToolTip="{loc:Loc Instance.Resource.RenameWithChinese.ToolTip}"
+                                                Visibility="{Binding ShowManageRename, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 <local:MyButton x:Name="BtnManageJarInJar" MinWidth="110" Text="{loc:Loc Instance.Resource.Mod.JarInJar.Entry}" Padding="13,7"
                                                 Margin="0,7,15,0" HorizontalAlignment="Left" ToolTip="{loc:Loc Instance.Resource.Mod.JarInJar.Entry.ToolTip}" Visibility="{Binding ShowManageJarInJar, Converter={StaticResource BooleanToVisibilityConverter}}"
                                                 Command="{Binding OpenJarInJarCommand}" />

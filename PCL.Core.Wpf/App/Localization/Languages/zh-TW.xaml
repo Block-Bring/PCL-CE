@@ -1072,6 +1072,14 @@
     <sys:String x:Key="Instance.Resource.InstallFromFiles">從檔案安裝</sys:String>
     <sys:String x:Key="Instance.Resource.List.Loading">正在載入資源清單</sys:String>
     <sys:String x:Key="Instance.Resource.Loading">正在載入資源清單</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese">補全中文名稱</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.ToolTip">依目前檔案名稱格式，為缺少中文名稱的模組檔案批次補全中文名稱</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Title">補全模組中文名稱</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Message">將依目前檔案名稱格式，為 {0} 個缺少中文名稱的模組檔案重新命名。&#xA;已包含中文名稱的檔案不會被更動。</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.None">沒有需要補全中文名稱的模組</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Success">已為 {0} 個模組補全中文名稱</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Partial">已為 {0} 個模組補全中文名稱，{1} 個因命名衝突或檔案被占用而略過</sys:String>
+    <sys:String x:Key="Instance.Resource.RenameWithChinese.Failed">補全中文名稱失敗，請檢查檔案是否被占用</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.GoDownload">轉到下載畫面</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.Message">你需要先安裝 Forge、Fabric 等模組載入器才能使用模組，請在下載頁面安裝這些實例。&#xA;如果你已經安裝過了模組載入器，那麼你很可能選擇了錯誤的實例，請點擊實例選擇按鈕切換實例。</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.Disabled.SelectInstance">實例選擇</sys:String>
