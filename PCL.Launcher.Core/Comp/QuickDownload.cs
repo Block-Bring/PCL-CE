@@ -12,8 +12,9 @@ public static partial class Comp
     ///     资源卡片的快速下载入口：按 <see cref="Config.Download.Comp.QuickDownloadBehavior" /> 指定的行为，
     ///     下载该资源最新（优先 Release、其次最新发布）的兼容版本到目标实例或文件夹。
     ///     由 <see cref="MyCompItem" /> 上的快速下载按钮调用。快速下载不会自动安装前置。
+    ///     <paramref name="targetInstance" /> 非空时（资源下载页处于「按实例」筛选），跳过选择存放位置，直接下载到该实例。
     /// </summary>
-    public static void QuickDownload(CompProject project)
+    public static void QuickDownload(CompProject project, McInstance? targetInstance = null)
     {
         LauncherCommon.RunInNewThread(
             () =>
@@ -32,6 +33,24 @@ public static partial class Comp
                     {
                         LauncherUi.Interaction?.ShowHint(
                             Lang.Text("Download.Comp.QuickDownload.Hint.NoFile"));
+                        return;
+                    }
+
+                    if (targetInstance is not null)
+                    {
+                        if (Config.Download.Comp.DefaultFilterConfirm)
+                        {
+                            var confirmed = LauncherCommon.RunInUiWait(() =>
+                                LauncherUi.Interaction?.ShowConfirm(
+                                    Lang.Text("Download.Comp.QuickDownload.ConfirmInstance.Message",
+                                        targetInstance.Name),
+                                    Lang.Text("Download.Comp.QuickDownload.ConfirmInstance.Title"),
+                                    Lang.Text("Common.Action.Continue"),
+                                    Lang.Text("Common.Action.Cancel")));
+                            if (confirmed != true) return;
+                        }
+
+                        _QuickDownloadToInstance(project, files, targetInstance);
                         return;
                     }
 
