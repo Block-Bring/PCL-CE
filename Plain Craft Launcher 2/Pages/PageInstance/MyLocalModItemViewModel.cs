@@ -101,8 +101,6 @@ public partial class MyLocalModItemViewModel : ViewModelBase
 
     [ObservableProperty] private string _enabledButtonIcon = "lucide/circle-minus";
 
-    [ObservableProperty] private int _visibleButtonCount = 3;
-
     [ObservableProperty] private Brush _tagForeground = Brushes.Gray;
 
     /// <summary>标签文本；用 <see cref="LocalizedText" /> 承载，语言切换时自动刷新。</summary>
@@ -141,7 +139,6 @@ public partial class MyLocalModItemViewModel : ViewModelBase
         Host = host;
         ShowEnabledButton = host is not null && host.CompType == Comp.CompType.Mod &&
                             entry.State != LocalComp.LocalCompFile.LocalFileStatus.Unavailable;
-        VisibleButtonCount = ShowEnabledButton ? 4 : 3;
         EnabledButtonIcon = entry.State == LocalComp.LocalCompFile.LocalFileStatus.Fine
             ? "lucide/circle-minus"
             : "lucide/circle-check";

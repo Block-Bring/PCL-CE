@@ -303,26 +303,11 @@ public partial class MyLocalCompItem
         // ButtonStack
         if (buttonStack is not null)
         {
-            if (IsMouseOver)
-            {
-                ani.Add(Animations.AaOpacity(buttonStack, 1d - buttonStack.Opacity,
-                    (int)Math.Round(time * 0.7d),
-                    (int)Math.Round(time * 0.3d)));
-                ani.Add(Animations.AaDouble(
-                    i => ColumnPaddingRight.Width =
-                        new GridLength(Math.Max(0, ColumnPaddingRight.Width.Value + (double)i)),
-                    5 + VisibleButtonCount * 25 - ColumnPaddingRight.Width.Value, (int)Math.Round(time * 0.3d),
-                    (int)Math.Round(time * 0.7d)));
-            }
-            else
-            {
-                ani.Add(Animations.AaOpacity(buttonStack, -buttonStack.Opacity,
-                    (int)Math.Round(time * 0.4d)));
-                ani.Add(Animations.AaDouble(
-                    i => ColumnPaddingRight.Width =
-                        new GridLength(Math.Max(0, ColumnPaddingRight.Width.Value + (double)i)),
-                    4d - ColumnPaddingRight.Width.Value, (int)Math.Round(time * 0.4d)));
-            }
+            // 只做透明度动画：不改变布局列宽，避免文本在悬浮时连续重排而出现抖动
+            ani.Add(Animations.AaOpacity(
+                buttonStack,
+                (IsMouseOver ? 1d : 0d) - buttonStack.Opacity,
+                (int)Math.Round(time * (IsMouseOver ? 0.7d : 0.4d))));
         }
 
         // RectBack
@@ -750,11 +735,6 @@ public partial class MyLocalCompItem
     public Action<MyLocalCompItem, EventArgs>? buttonHandler;
     public FrameworkElement? buttonStack;
 
-    /// <summary>当前按钮数量中实际可见的数量（虚拟化列表由 ViewModel 决定）。</summary>
-    private int VisibleButtonCount => _defaultButtonsCreated
-        ? ViewModel?.VisibleButtonCount ?? 3
-        : Buttons.Count();
-
     public IEnumerable<MyIconButton> Buttons
     {
         get => _buttons ?? Enumerable.Empty<MyIconButton>();
@@ -778,17 +758,27 @@ public partial class MyLocalCompItem
 
         if (!_buttons.Any())
             return;
-        // 添加新 Stack
-        buttonStack = new StackPanel
+        // 添加新 Stack。外层 Border 提供底色，避免叠加显示时文本从按钮缝隙中透出
+        var panel = new StackPanel
         {
-            Opacity = 0d,
-            Margin = new Thickness(0d, 0d, 5d, 0d),
             SnapsToDevicePixels = false,
             Orientation = (Orientation)System.Windows.Forms.Orientation.Horizontal,
+            UseLayoutRounding = false
+        };
+        var container = new Border
+        {
+            Child = panel,
+            Opacity = 0d,
+            Margin = new Thickness(0d, 0d, 2d, 0d),
+            Padding = new Thickness(2d, 1d, 2d, 1d),
+            CornerRadius = new CornerRadius(7d),
+            SnapsToDevicePixels = false,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             UseLayoutRounding = false
         };
+        container.SetResourceReference(Border.BackgroundProperty, "ColorBrushBg1");
+        buttonStack = container;
         SetColumnSpan(buttonStack, 10);
         SetRowSpan(buttonStack, 10);
         // 构造按钮
@@ -798,7 +788,7 @@ public partial class MyLocalCompItem
                 btn.Height = 25d;
             if (btn.Width.Equals(double.NaN))
                 btn.Width = 25d;
-            ((StackPanel)buttonStack).Children.Add(btn);
+            panel.Children.Add(btn);
         }
 
         Children.Add(buttonStack);
