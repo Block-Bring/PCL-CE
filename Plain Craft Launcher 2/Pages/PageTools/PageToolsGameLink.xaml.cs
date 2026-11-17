@@ -433,6 +433,21 @@ public partial class PageToolsGameLink : IPageView
         {
             try
             {
+                // 自建构建未配置联机根服务器时直接降级，避免拼出相对 URL 触发异常
+                if (Secrets.LinkServers.Length == 0)
+                {
+                    LobbyInfoProvider.IsLobbyAvailable = false;
+                    Common.RunInUi(() =>
+                    {
+                        if (!IsCurrentAnnouncementRequest(requestId)) return;
+                        _announcementLoadState = AnnouncementLoadState.Failed;
+                        _vm.HintAnnounceVisibility = Visibility.Visible;
+                        HintAnnounce.Theme = MyHint.Themes.Red;
+                        _vm.HintAnnounceText = Lang.Text("Tools.GameLink.Error.ConnectFailed");
+                    });
+                    return;
+                }
+
                 var serverNumber = 0;
                 JsonObject jObj = null;
 

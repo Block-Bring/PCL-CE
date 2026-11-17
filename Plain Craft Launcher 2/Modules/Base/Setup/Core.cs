@@ -7,6 +7,10 @@ public partial class Setup
 {
     public Setup()
     {
+        // 自建构建没有可用的联机服务器，强制隐藏「设置-联机」与「工具-大厅」
+        Config.Preference.Hide.SetupGameLink = true;
+        Config.Preference.Hide.ToolsGameLink = true;
+
         ConfigService.RegisterObserver(
             Config.Preference.Hide,
             new ConfigObserver(ConfigEvent.Changed, _ => PageSetupUI.HiddenRefresh()));

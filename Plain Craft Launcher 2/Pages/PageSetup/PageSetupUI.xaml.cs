@@ -153,13 +153,15 @@ public partial class PageSetupUI : IPageView
             CheckHiddenSetupJava.Checked = uiHidden.SetupJava;
             CheckHiddenLauncherMisc.Checked = uiHidden.SetupLauncherMisc;
             CheckHiddenSetupUpdate.Checked = uiHidden.SetupUpdate;
-            CheckHiddenSetupGameLink.Checked = uiHidden.SetupGameLink;
+            // 自建构建没有可用的联机服务器，强制隐藏「设置-联机」
+            CheckHiddenSetupGameLink.Checked = true;
             CheckHiddenSetupAbout.Checked = uiHidden.SetupAbout;
             CheckHiddenSetupFeedback.Checked = uiHidden.SetupFeedback;
             CheckHiddenSetupLog.Checked = uiHidden.SetupLog;
 
             // 子页面 工具
-            CheckHiddenToolsGameLink.Checked = uiHidden.ToolsGameLink;
+            // 自建构建没有可用的联机服务器，强制隐藏「工具-大厅」
+            CheckHiddenToolsGameLink.Checked = true;
             CheckHiddenToolsTest.Checked = uiHidden.ToolsTest;
 
             // 子页面 实例设置

@@ -58,15 +58,31 @@ public partial class PageLaunchRight : IRefreshable
         if (string.IsNullOrWhiteSpace(input))
             return;
         input = new string(input.Where(char.IsAsciiLetter).ToArray()).ToLower();
-        if (input.Contains("pclcommunity"))
-        {
-            Animations.AniDispose(PanHint, true);
-            States.Hint.CEMessage = false;
-        }
-        else
+        if (!input.Contains("pclcommunity"))
         {
             HintService.Show(Hints.Info(Lang.Text("Launch.Right.CommunityHint.WrongInput")));
+            return;
         }
+
+        // 第二步：此分支开发者的名称
+        var devInput = (DialogService.Instance.Show(new InputDialogRequest
+        {
+            Title = Lang.Text("Launch.Right.CommunityHint.InputDevTitle"),
+            Buttons = DialogButtons.OkCancel,
+            HighLight = false,
+            ForceWait = true
+        }).Result?.InputText ?? "");
+        if (string.IsNullOrWhiteSpace(devInput))
+            return;
+        devInput = new string(devInput.Where(c => !char.IsWhiteSpace(c)).ToArray());
+        if (devInput != "方生布灵")
+        {
+            HintService.Show(Hints.Info(Lang.Text("Launch.Right.CommunityHint.WrongInput")));
+            return;
+        }
+
+        Animations.AniDispose(PanHint, true);
+        States.Hint.CEMessage = false;
     }
 
     #region 主页
