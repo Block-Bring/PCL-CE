@@ -40,12 +40,7 @@ public partial class FormMain
     {
         Common.RunInNewThread(() =>
         {
-            var changelogFile = $"{Common.pathTemp}CEUpdateLog.md";
-            string changelog;
-            if (File.Exists(changelogFile))
-                changelog = Common.ReadFile(changelogFile);
-            else
-                changelog = Lang.Text("Main.UpdateLog.Empty");
+            var changelog = ReadChangelog();
             if ((DialogService.Instance.Show(new MarkdownDialogRequest
             {
                 Title = Lang.Text("Main.UpdateLog.Title", Common.VersionBranchName, Common.VersionBaseName),
@@ -53,8 +48,29 @@ public partial class FormMain
                 Buttons = DialogButtons.Create("Common.Action.Confirm", "Main.UpdateLog.FullChangelog"),
                 ForceWait = true
             }).Result?.Button ?? 0) ==
-                2) Common.OpenWebsite("https://github.com/PCL-Community/PCL2-CE/releases");
+                2) Common.OpenWebsite("https://github.com/Block-Bring/PCL-CE/releases");
         }, "UpdateLog Output");
+    }
+
+    private static string ReadChangelog()
+    {
+        // 仅当临时目录中的日志确实对应当前版本时才使用它
+        var changelogFile = $"{Common.pathTemp}CEUpdateLog.md";
+        var versionFile = $"{Common.pathTemp}CEUpdateLog.version";
+        if (File.Exists(changelogFile) && File.Exists(versionFile)
+            && Common.ReadFile(versionFile).Trim() == Common.VersionBaseName)
+            return Common.ReadFile(changelogFile);
+        using (var stream = typeof(FormMain).Assembly.GetManifestResourceStream("PCL.CHANGELOG.md"))
+        {
+            if (stream is not null)
+            {
+                using var reader = new StreamReader(stream);
+                var bundled = reader.ReadToEnd();
+                if (!string.IsNullOrWhiteSpace(bundled))
+                    return bundled;
+            }
+        }
+        return Lang.Text("Main.UpdateLog.Empty");
     }
 
     // 窗口加载

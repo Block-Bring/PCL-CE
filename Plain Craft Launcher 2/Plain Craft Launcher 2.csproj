@@ -117,6 +117,7 @@
         <Resource Include="Images\**" />
         <Resource Include="Resources\**" />
         <EmbeddedResource Include="metadata.json" />
+        <EmbeddedResource Include="CHANGELOG.md" Condition="Exists('CHANGELOG.md')" />
     </ItemGroup>
     <ItemGroup>
         <Content Include="LICENCE" />
