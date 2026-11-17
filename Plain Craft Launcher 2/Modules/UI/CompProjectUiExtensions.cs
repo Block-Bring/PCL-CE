@@ -14,7 +14,8 @@ public static class CompProjectUiExtensions
         public MyCompItemViewModel ToCompItemViewModel(
             bool showMcVersionDesc,
             bool showLoaderDesc,
-            bool showQuickDownload = false)
+            bool showQuickDownload = false,
+            McInstance? quickDownloadTarget = null)
         {
             var title = project.GetControlTitle(true);
             var hasSubtitle = !string.IsNullOrEmpty(title.Value);
@@ -31,6 +32,7 @@ public static class CompProjectUiExtensions
                 ShowVersion = showMcVersionDesc || showLoaderDesc,
                 ShowTime = project.LastUpdate is not null,
                 ShowDownloadButton = showQuickDownload,
+                QuickDownloadTarget = quickDownloadTarget,
                 VersionText = LocalizedText.Create(
                     () => project.BuildVersionDescription(showMcVersionDesc, showLoaderDesc)),
                 DownloadText = LocalizedText.Create(() => Lang.CompactNumber(project.DownloadCount))

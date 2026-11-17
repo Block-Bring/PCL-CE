@@ -1,3 +1,4 @@
+using PCL.Core.App;
 using PCL.Core.App.Localization;
 using System.Windows;
 using System.Windows.Controls;
@@ -45,7 +46,8 @@ public partial class PageComp
                 {
                     var showQuickDownload = result.Type != Comp.CompType.ModPack &&
                                             result.Type != Comp.CompType.DataPack;
-                    items.Add(result.ToCompItemViewModel(showMcVersionDesc, showLoaderDesc, showQuickDownload));
+                    items.Add(result.ToCompItemViewModel(showMcVersionDesc, showLoaderDesc, showQuickDownload,
+                        _requestInstance));
                 }
             }
 
@@ -216,17 +218,32 @@ public partial class PageComp
         IsVisibleChanged += PageComp_IsVisibleChanged;
         InitializeComponent();
         DataContext = ViewModel;
+        InstanceList.mcInstanceListLoader.OnStateChangedUi += InstanceList_OnStateChanged;
     }
 
     private void PanSearchBox_Search(object sender, EventArgs e) => StartNewSearch();
 
     private void PageCompControls_Inited(object sender, EventArgs e)
     {
+        // 首次加载时按设置初始化版本筛选方式
+        if (!_isLoaderInited)
+        {
+            ComboSearchVersionMode.SelectedIndex = GetDefaultFilterMode();
+            UpdateFilterControlVisibility();
+            if (IsInstanceFilterMode)
+            {
+                EnsureInstanceListLoaded();
+                RefreshInstanceCombo(false);
+            }
+        }
+
         // 不知道从 Initialized 改成 Loaded 会不会有问题，但用 Initialized 会导致初始的筛选器修改被覆盖回默认值
         if (targetVersion is not null)
         {
             // 设置目标
             ResetFilter(); // 重置筛选器
+            ComboSearchVersionMode.SelectedIndex = 0; // 从实例页跳转时保持手动选择
+            UpdateFilterControlVisibility();
             TextSearchVersion.Text = targetVersion.Info.VanillaName;
 
             MyComboBoxItem GetTargetItemByName(string name)
@@ -267,24 +284,6 @@ public partial class PageComp
                 TextSearchVersion.Items.Insert(1, new MyComboBoxItem { Content = highestVersion });
         }
 
-        if (PageType == Comp.CompType.Shader)
-        {
-            ViewModel.IsLoaderLabelVisible = true;
-            ViewModel.IsLoaderComboVisible = false;
-            ViewModel.IsShaderLoaderComboVisible = true;
-        }
-        else if (PageType is Comp.CompType.Mod or Comp.CompType.ModPack)
-        {
-            ViewModel.IsLoaderLabelVisible = true;
-            ViewModel.IsLoaderComboVisible = true;
-            ViewModel.IsShaderLoaderComboVisible = false;
-        }
-        else
-        {
-            ViewModel.IsLoaderLabelVisible = false;
-            ViewModel.IsLoaderComboVisible = false;
-            ViewModel.IsShaderLoaderComboVisible = false;
-        }
     }
 
     private void PageComp_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -292,12 +291,182 @@ public partial class PageComp
         if (IsVisible) RefreshAllFavoriteStatus();
     }
 
+    /// <summary>
+    ///     当前是否使用“按实例”筛选（整合包页不支持该模式）。
+    /// </summary>
+    private bool IsInstanceFilterMode => PageType != Comp.CompType.ModPack &&
+                                         ComboSearchVersionMode.SelectedIndex == 1;
+
+    private int GetDefaultFilterMode()
+    {
+        var mode = PageType switch
+        {
+            Comp.CompType.Mod => Config.Download.Comp.DefaultFilterModeMod,
+            Comp.CompType.DataPack => Config.Download.Comp.DefaultFilterModeDataPack,
+            Comp.CompType.ResourcePack => Config.Download.Comp.DefaultFilterModeResourcePack,
+            Comp.CompType.Shader => Config.Download.Comp.DefaultFilterModeShader,
+            Comp.CompType.World => Config.Download.Comp.DefaultFilterModeWorld,
+            _ => 0
+        };
+        return Math.Clamp(mode, 0, 1);
+    }
+
+    private void UpdateFilterControlVisibility()
+    {
+        var isInstanceMode = IsInstanceFilterMode;
+        var supportsMode = PageType != Comp.CompType.ModPack;
+
+        ViewModel.IsVersionModeVisible = supportsMode;
+        ViewModel.IsVersionComboVisible = !isInstanceMode;
+        ViewModel.IsInstanceComboVisible = isInstanceMode;
+        ViewModel.IsLoaderLabelVisible = !isInstanceMode &&
+                                         PageType is Comp.CompType.Shader or Comp.CompType.Mod
+                                             or Comp.CompType.ModPack;
+        ViewModel.IsLoaderComboVisible = !isInstanceMode &&
+                                         PageType is Comp.CompType.Mod or Comp.CompType.ModPack;
+        ViewModel.IsShaderLoaderComboVisible = !isInstanceMode && PageType == Comp.CompType.Shader;
+
+        // 整合包页没有版本筛选方式，沿用原来的列位置
+        var versionColumn = supportsMode ? 2 : 0;
+        var loaderColumn = supportsMode ? 4 : 2;
+        Grid.SetColumn(LabVersion, versionColumn);
+        Grid.SetColumn(TextSearchVersion, versionColumn + 1);
+        Grid.SetColumn(LabInstance, versionColumn);
+        Grid.SetColumn(ComboSearchInstance, versionColumn + 1);
+        Grid.SetColumn(LabLoader, loaderColumn);
+        Grid.SetColumn(ComboSearchLoader, loaderColumn + 1);
+        Grid.SetColumn(ComboSearchShaderLoader, loaderColumn + 1);
+    }
+
+    private void ComboSearchVersionMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded)
+            return;
+        UpdateFilterControlVisibility();
+        if (!IsInstanceFilterMode)
+            return;
+        EnsureInstanceListLoaded();
+        RefreshInstanceCombo(true);
+    }
+
+    private void InstanceList_OnStateChanged(Loading.LoaderBase sender, LoadState state, LoadState oldState)
+    {
+        if (state != LoadState.Finished || !ViewModel.IsInstanceComboVisible)
+            return;
+        RefreshInstanceCombo(true);
+    }
+
+    private static void EnsureInstanceListLoaded()
+    {
+        if (string.IsNullOrEmpty(GameFolders.mcFolderSelected))
+            return;
+        Loading.LoaderFolderRun(
+            InstanceList.mcInstanceListLoader,
+            GameFolders.mcFolderSelected,
+            Loading.LoaderFolderRunType.RunOnUpdated,
+            1,
+            @"versions\");
+    }
+
+    /// <summary>
+    ///     按当前文件夹重新填充实例下拉框，优先保持原选择，其次选中当前实例。
+    /// </summary>
+    private void RefreshInstanceCombo(bool keepSelection)
+    {
+        var previous = keepSelection
+            ? (ComboSearchInstance.SelectedItem as MyComboBoxItem)?.Tag as McInstance
+            : null;
+        var instances = InstanceList.mcInstanceList.Values
+            .SelectMany(list => list)
+            .Where(instance => instance is not null && instance.state != McInstanceState.Error)
+            .OrderBy(instance => instance.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        ComboSearchInstance.Items.Clear();
+        foreach (var instance in instances)
+            ComboSearchInstance.Items.Add(new MyComboBoxItem { Content = instance.Name, Tag = instance });
+
+        var selected = previous is null
+            ? null
+            : instances.FirstOrDefault(instance => instance.PathInstance == previous.PathInstance);
+        if (selected is null && InstanceList.McMcInstanceSelected is { } current)
+            selected = instances.FirstOrDefault(instance => instance.PathInstance == current.PathInstance);
+        selected ??= instances.FirstOrDefault();
+        ComboSearchInstance.SelectedItem = ComboSearchInstance.Items
+            .OfType<MyComboBoxItem>()
+            .FirstOrDefault(item => ReferenceEquals(item.Tag, selected));
+    }
+
+    private void SelectCurrentFilterInstance()
+    {
+        if (InstanceList.McMcInstanceSelected is not { } current)
+            return;
+        ComboSearchInstance.SelectedItem = ComboSearchInstance.Items
+            .OfType<MyComboBoxItem>()
+            .FirstOrDefault(item => ReferenceEquals(item.Tag, current));
+    }
+
+    private McInstance? GetSelectedFilterInstance()
+        => (ComboSearchInstance.SelectedItem as MyComboBoxItem)?.Tag as McInstance;
+
+    private static Comp.CompLoaderType GetInstanceModLoader(McInstance instance)
+    {
+        if (!instance.IsLoaded)
+            instance.Load();
+        if (instance.Info.HasForge)
+            return Comp.CompLoaderType.Forge;
+        if (instance.Info.HasFabric)
+            return Comp.CompLoaderType.Fabric;
+        if (instance.Info.HasNeoForge)
+            return Comp.CompLoaderType.NeoForge;
+        if (instance.Info.HasQuilt)
+            return Comp.CompLoaderType.Quilt;
+        return Comp.CompLoaderType.Any;
+    }
+
+    /// <summary>
+    ///     由实例推断光影筛选条件：OptiFine 优先，其次 Iris/Oculus，最后视为原版可用。
+    /// </summary>
+    private static string GetInstanceShaderLoaderTag(McInstance instance)
+    {
+        if (!instance.IsLoaded)
+            instance.Load();
+        if (instance.Info.HasOptiFine ||
+            LocalComp.GetModLocalCompByKeywords(instance, "optifine", "optifine") is not null)
+            return "/optifine";
+        if (LocalComp.GetModLocalCompByKeywords(instance, "iris", "iris") is not null ||
+            LocalComp.GetModLocalCompByKeywords(instance, "oculus", "oculus") is not null)
+            return "/iris";
+        return "/vanilla";
+    }
+
+    /// <summary>最近一次请求所用的按实例筛选目标，用于快速下载时跳过选择存放位置。</summary>
+    private McInstance? _requestInstance;
+
     private Comp.CompProjectRequest LoaderInput()
     {
         var request = new Comp.CompProjectRequest(PageType, storage, (page + 1) * PageSize);
-        var gameVersion = TextSearchVersion.Text == Lang.Text("Download.Comp.Filter.Version.AllInputAvailable") ? null :
-            TextSearchVersion.Text.Contains('.') || TextSearchVersion.Text.Contains('w') ? TextSearchVersion.Text :
-            null;
+        var isInstanceMode = IsInstanceFilterMode;
+        var filterInstance = isInstanceMode ? GetSelectedFilterInstance() : null;
+        _requestInstance = filterInstance;
+        if (filterInstance is { IsLoaded: false })
+            filterInstance.Load();
+
+        string? gameVersion;
+        if (isInstanceMode)
+        {
+            gameVersion = filterInstance?.Info.VanillaName;
+            if (gameVersion is not null && !(gameVersion.Contains('.') || gameVersion.Contains('w')))
+                gameVersion = null;
+        }
+        else
+        {
+            gameVersion = TextSearchVersion.Text == Lang.Text("Download.Comp.Filter.Version.AllInputAvailable")
+                ? null
+                : TextSearchVersion.Text.Contains('.') || TextSearchVersion.Text.Contains('w')
+                    ? TextSearchVersion.Text
+                    : null;
+        }
 
         request.searchText = PanSearchBox.Text.Trim();
         if (request.searchText.RegexCheck(@"\|.*[\u4e00-\u9fff]"))
@@ -306,7 +475,11 @@ public partial class PageComp
             request.searchText = request.searchText.AfterFirst("|").Trim();
         request.gameVersion = gameVersion;
         var selectedTag = (ComboSearchTag.SelectedItem as FrameworkElement)?.Tag?.ToString();
-        var loaderTag = (ComboSearchShaderLoader.SelectedItem as FrameworkElement)?.Tag?.ToString();
+        var loaderTag = isInstanceMode
+            ? PageType == Comp.CompType.Shader && filterInstance is not null
+                ? GetInstanceShaderLoaderTag(filterInstance)
+                : null
+            : (ComboSearchShaderLoader.SelectedItem as FrameworkElement)?.Tag?.ToString();
 
         request.tag = (PageType == Comp.CompType.Shader
             ? string.IsNullOrEmpty(loaderTag)
@@ -314,7 +487,9 @@ public partial class PageComp
                 : selectedTag + loaderTag
             : selectedTag) ?? string.Empty;
         request.modLoader = PageType is Comp.CompType.Mod or Comp.CompType.ModPack
-            ? (Comp.CompLoaderType)Common.Val(((MyComboBoxItem)ComboSearchLoader.SelectedItem).Tag)
+            ? isInstanceMode
+                ? filterInstance is null ? Comp.CompLoaderType.Any : GetInstanceModLoader(filterInstance)
+                : (Comp.CompLoaderType)Common.Val(((MyComboBoxItem)ComboSearchLoader.SelectedItem).Tag)
             : Comp.CompLoaderType.Any;
         request.source = (Comp.CompSourceType)Common.Val(((MyComboBoxItem)ComboSearchSource.SelectedItem).Tag);
         request.sort = (Comp.CompSortType)Common.Val(((MyComboBoxItem)ComboSearchSort.SelectedItem).Tag);
@@ -344,6 +519,7 @@ public partial class PageComp
     private void ResetFilter()
     {
         PanSearchBox.Text = "";
+        ComboSearchVersionMode.SelectedIndex = GetDefaultFilterMode();
         TextSearchVersion.Text = Lang.Text("Download.Comp.Filter.Version.AllInputAvailable");
         TextSearchVersion.SelectedIndex = 0;
         ComboSearchSource.SelectedIndex = 0;
@@ -351,6 +527,7 @@ public partial class PageComp
         ComboSearchLoader.SelectedIndex = 0;
         ComboSearchShaderLoader.SelectedIndex = 0;
         ComboSearchSort.SelectedIndex = 0;
+        SelectCurrentFilterInstance();
         loader.lastFinishedTime = 0L;
     }
 

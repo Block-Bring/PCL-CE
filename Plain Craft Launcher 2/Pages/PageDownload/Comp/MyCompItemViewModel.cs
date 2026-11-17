@@ -38,6 +38,9 @@ public partial class MyCompItemViewModel : ViewModelBase
     /// <summary>是否显示快速下载按钮（仅搜索结果页）。</summary>
     public bool ShowDownloadButton { get; set; }
 
+    /// <summary>快速下载的目标实例；非空时直接下载到该实例，跳过选择存放位置的步骤。</summary>
+    public McInstance? QuickDownloadTarget { get; set; }
+
     /// <summary>版本描述文本，语言切换后自动刷新。</summary>
     public LocalizedText VersionText { get; set; } = LocalizedText.Create(() => "");
 

@@ -1635,9 +1635,10 @@ public partial class FormMain
     {
         /// <summary>
         /// <list type="bullet">
-        ///   <item><description>CompDetail: (CompProject, ExpandedTitles, TargetVersion, TargetLoader, ResourceType)</description></item>
+        ///   <item><description>CompDetail: (CompProject, ExpandedTitles, TargetVersion, TargetLoader, ResourceType, SavePath, FilterInstance)</description></item>
         ///   <item><description>VersionSaves: SavePath</description></item>
         /// </list>
+        /// <c>FilterInstance</c> 为资源下载页「按实例」筛选时选中的实例，非空时详情页保存将直接使用该实例。
         /// </summary>
         public (
             Comp.CompProject CompProject,
@@ -1645,7 +1646,8 @@ public partial class FormMain
             string TargetVersion,
             Comp.CompLoaderType TargetLoader,
             Comp.CompType ResourceType,
-            string SavePath
+            string SavePath,
+            McInstance? FilterInstance
         )? additional;
 
         /// <summary>

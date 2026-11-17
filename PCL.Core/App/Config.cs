@@ -44,6 +44,12 @@ public static partial class Config
     {
         [ConfigItem<bool>("SystemNetEnableDoH", true)] public partial bool EnableDoH { get; set; }
 
+        /// <summary>
+        /// 用户自行配置的 CurseForge API Key，留空时使用内置密钥。
+        /// </summary>
+        [ConfigItem<string>("SystemCurseForgeApiKey", "", ConfigSource.SharedEncrypt)]
+        public partial string CurseForgeApiKey { get; set; }
+
         [ConfigGroup("HttpProxy")] partial class HttpProxyConfigGroup
         {
             [ConfigItem<string>("SystemHttpProxy", "", ConfigSource.SharedEncrypt)] public partial string CustomAddress { get; set; }
@@ -93,6 +99,20 @@ public static partial class Config
             [ConfigItem<int>("ToolDownloadMod", 1)] public partial int CompSourceSolution { get; set; }
             [ConfigItem<int>("ToolModLocalNameStyle", 0)] public partial int UiCompNameSolution { get; set; }
             [ConfigItem<int>("ToolDownloadQuickBehavior", 0)] public partial int QuickDownloadBehavior { get; set; }
+
+            /// <summary>
+            /// 各资源下载页默认使用的版本筛选方式，0 为手动选择，1 为按实例。
+            /// </summary>
+            [ConfigItem<int>("ToolDownloadDefaultFilterModeMod", 0)] public partial int DefaultFilterModeMod { get; set; }
+            [ConfigItem<int>("ToolDownloadDefaultFilterModeDataPack", 0)] public partial int DefaultFilterModeDataPack { get; set; }
+            [ConfigItem<int>("ToolDownloadDefaultFilterModeResourcePack", 0)] public partial int DefaultFilterModeResourcePack { get; set; }
+            [ConfigItem<int>("ToolDownloadDefaultFilterModeShader", 0)] public partial int DefaultFilterModeShader { get; set; }
+            [ConfigItem<int>("ToolDownloadDefaultFilterModeWorld", 0)] public partial int DefaultFilterModeWorld { get; set; }
+
+            /// <summary>
+            /// 按实例筛选时，快速下载到筛选实例前是否弹出确认。
+            /// </summary>
+            [ConfigItem<bool>("ToolDownloadDefaultFilterConfirm", true)] public partial bool DefaultFilterConfirm { get; set; }
         }
     }
 

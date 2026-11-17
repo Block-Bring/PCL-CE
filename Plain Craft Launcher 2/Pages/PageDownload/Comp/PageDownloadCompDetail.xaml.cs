@@ -172,8 +172,6 @@ public partial class PageDownloadCompDetail : IPageView
             var file = (Comp.CompFile)sender.Tag;
             var loaderName = $"{(_project.FromCurseForge ? "CurseForge" : "Modrinth")} {Lang.Text("Download.Comp.Detail.WorldDownload")}：{_project.TranslatedName} ";
 
-            // 确认默认保存位置
-            string? defaultFolder;
             var subFolder = @"saves\";
             // 获取资源所需的加载器
             var allowedLoaders = new List<Comp.CompLoaderType>();
@@ -182,64 +180,83 @@ public partial class PageDownloadCompDetail : IPageView
             else if (_project.ModLoaders.Any()) allowedLoaders = _project.ModLoaders;
             Common.Log("[Comp] 世界要求的加载器种类：" + (allowedLoaders.Any() ? allowedLoaders.Join(" / ") : "无要求"));
 
-            // 获取常规资源默认下载位置
-            if (cachedFolder.ContainsKey(file.Type) && !string.IsNullOrEmpty(cachedFolder[file.Type]))
+            string target;
+            if (_filterInstance is not null)
             {
-                defaultFolder = cachedFolder.GetOrDefault(file.Type,
-                    InstanceList.McMcInstanceSelected?.PathIndie ?? Common.ExePath);
-                Common.Log($"[Comp] 使用上次下载时的文件夹作为默认下载位置：{defaultFolder}");
-            }
-            else if (InstanceList.McMcInstanceSelected is not null && IsVersionSuitable(InstanceList.McMcInstanceSelected))
-            {
-                defaultFolder = $"{InstanceList.McMcInstanceSelected.PathIndie}{subFolder}";
-                Directory.CreateDirectory(defaultFolder);
-                Common.Log($"[Comp] 使用当前实例作为默认下载位置：{defaultFolder}");
+                // 按实例筛选：跳过选择存放位置，直接保存到该实例
+                if (!ConfirmFilterInstanceSave()) return;
+                var filterFolder = _filterInstance.PathIndie + subFolder;
+                Directory.CreateDirectory(filterFolder);
+                target = Path.Combine(filterFolder,
+                    string.IsNullOrEmpty(file.FileName) ? Comp.CompFileNameGet(_project, file) : file.FileName);
+                Common.Log($"[Comp] 按实例筛选，直接保存到实例：{filterFolder}");
             }
             else
             {
-                // 查找所有可能的实例
-                var needLoad = InstanceList.mcInstanceListLoader.State != LoadState.Finished;
-                if (needLoad)
+                // 确认默认保存位置
+                string? defaultFolder;
+                // 获取常规资源默认下载位置
+                if (cachedFolder.ContainsKey(file.Type) && !string.IsNullOrEmpty(cachedFolder[file.Type]))
                 {
-                    HintService.Show(Hints.Info(Lang.Text("Download.Comp.Detail.FindingApplicableInstance")));
-                    Loading.LoaderFolderRun(InstanceList.mcInstanceListLoader,
-                        GameFolders.mcFolderSelected!,
-                        Loading.LoaderFolderRunType.ForceRun,
-                        1,
-                        @"versions\",
-                        true);
+                    defaultFolder = cachedFolder.GetOrDefault(file.Type,
+                        InstanceList.McMcInstanceSelected?.PathIndie ?? Common.ExePath);
+                    Common.Log($"[Comp] 使用上次下载时的文件夹作为默认下载位置：{defaultFolder}");
                 }
-
-                var suitableVersions = InstanceList.mcInstanceList.Values
-                    .SelectMany(l => l)
-                    .Where(IsVersionSuitable)
-                    .Select(v => new DirectoryInfo($"{v.PathIndie}{subFolder}"))
-                    .ToArray();
-
-                if (suitableVersions.Length != 0)
+                else if (InstanceList.McMcInstanceSelected is not null &&
+                         IsVersionSuitable(InstanceList.McMcInstanceSelected))
                 {
-                    var selectedVersion = suitableVersions
-                        .OrderByDescending(dir => dir.Exists ? dir.LastWriteTimeUtc : DateTime.MinValue)
-                        .ThenByDescending(dir => dir.Exists ? dir.GetFiles().Length : -1).First(); // 先按文件夹更改时间降序
-                    // 再按文件夹中的文件数量降序
-                    defaultFolder = selectedVersion.FullName;
+                    defaultFolder = $"{InstanceList.McMcInstanceSelected.PathIndie}{subFolder}";
                     Directory.CreateDirectory(defaultFolder);
-                    Common.Log($"[Comp] 使用适合的游戏实例作为默认下载位置：{defaultFolder}");
+                    Common.Log($"[Comp] 使用当前实例作为默认下载位置：{defaultFolder}");
                 }
                 else
                 {
-                    defaultFolder = GameFolders.mcFolderSelected;
+                    // 查找所有可能的实例
+                    var needLoad = InstanceList.mcInstanceListLoader.State != LoadState.Finished;
                     if (needLoad)
-                        HintService.Show(Hints.Info(Lang.Text("Download.Comp.Detail.NoApplicableInstance")));
-                    else
-                        Common.Log("[Comp] 由于当前实例不兼容，使用当前的 MC 文件夹作为默认下载位置");
-                }
-            }
+                    {
+                        HintService.Show(Hints.Info(Lang.Text("Download.Comp.Detail.FindingApplicableInstance")));
+                        Loading.LoaderFolderRun(InstanceList.mcInstanceListLoader,
+                            GameFolders.mcFolderSelected!,
+                            Loading.LoaderFolderRunType.ForceRun,
+                            1,
+                            @"versions\",
+                            true);
+                    }
 
-            var target = SystemDialogs.SelectSaveFile(Lang.Text("Download.Comp.Detail.SelectWorldInstallLocation"), file.FileName ?? "", Lang.Text("Download.Comp.Detail.WorldFile.Filter"),
-                defaultFolder);
-            if (string.IsNullOrEmpty(target))
-                return;
+                    var suitableVersions = InstanceList.mcInstanceList.Values
+                        .SelectMany(l => l)
+                        .Where(IsVersionSuitable)
+                        .Select(v => new DirectoryInfo($"{v.PathIndie}{subFolder}"))
+                        .ToArray();
+
+                    if (suitableVersions.Length != 0)
+                    {
+                        var selectedVersion = suitableVersions
+                            .OrderByDescending(dir => dir.Exists ? dir.LastWriteTimeUtc : DateTime.MinValue)
+                            .ThenByDescending(dir => dir.Exists ? dir.GetFiles().Length : -1).First(); // 先按文件夹更改时间降序
+                        // 再按文件夹中的文件数量降序
+                        defaultFolder = selectedVersion.FullName;
+                        Directory.CreateDirectory(defaultFolder);
+                        Common.Log($"[Comp] 使用适合的游戏实例作为默认下载位置：{defaultFolder}");
+                    }
+                    else
+                    {
+                        defaultFolder = GameFolders.mcFolderSelected;
+                        if (needLoad)
+                            HintService.Show(Hints.Info(Lang.Text("Download.Comp.Detail.NoApplicableInstance")));
+                        else
+                            Common.Log("[Comp] 由于当前实例不兼容，使用当前的 MC 文件夹作为默认下载位置");
+                    }
+                }
+
+                target = SystemDialogs.SelectSaveFile(
+                    Lang.Text("Download.Comp.Detail.SelectWorldInstallLocation"), file.FileName ?? "",
+                    Lang.Text("Download.Comp.Detail.WorldFile.Filter"),
+                    defaultFolder);
+                if (string.IsNullOrEmpty(target))
+                    return;
+            }
 
             // 构造步骤加载器
             var loaders = new List<Loading.LoaderBase>();
@@ -320,6 +337,7 @@ public partial class PageDownloadCompDetail : IPageView
 
                 // 确认默认保存位置
                 string? defaultFolder = null;
+                string? filterFolder = null;
                 var allowedLoaders = new List<Comp.CompLoaderType>();
                 if (file.Type != Comp.CompType.ModPack)
                 {
@@ -341,7 +359,13 @@ public partial class PageDownloadCompDetail : IPageView
                         $"[Comp] {desc}要求的加载器种类：{(allowedLoaders.Any() ? string.Join(" / ", allowedLoaders) : "无要求")}");
 
                     // 获取常规资源默认下载位置逻辑
-                    if (cachedFolder.ContainsKey(file.Type) && !string.IsNullOrEmpty(cachedFolder[file.Type]))
+                    if (_filterInstance is not null)
+                    {
+                        // 按实例筛选：跳过选择存放位置，直接保存到该实例
+                        filterFolder = _filterInstance.PathIndie + subFolder;
+                        Common.Log($"[Comp] 按实例筛选，直接保存到实例：{filterFolder}");
+                    }
+                    else if (cachedFolder.ContainsKey(file.Type) && !string.IsNullOrEmpty(cachedFolder[file.Type]))
                     {
                         defaultFolder = cachedFolder.GetOrDefault(file.Type,
                             InstanceList.McMcInstanceSelected?.PathIndie ?? Common.ExePath);
@@ -416,21 +440,33 @@ public partial class PageDownloadCompDetail : IPageView
                 var fileName = Comp.CompFileNameGet(_project, file);
                 Common.RunInUi(() =>
                 {
-                    var target = SystemDialogs.SelectSaveFile(Lang.Text("Download.Comp.Detail.SelectSaveLocation"),
-                        fileName,
-                        $"{Lang.Text("Download.Comp.Detail.ResourceFile.Filter", desc)}|{(file.Type == Comp.CompType.Mod
-                            ? file.FileName?.EndsWith(".litemod") == true ? "*.litemod" : "*.jar"
-                            : file.FileName?.EndsWith(".mrpack") == true
-                              || (string.IsNullOrWhiteSpace(file.FileName) && file is { Type: Comp.CompType.ModPack, FromCurseForge: false })
-                                ? "*.mrpack"
-                                : "*.zip")}",
-                        defaultFolder);
+                    string target;
+                    if (filterFolder is not null)
+                    {
+                        // 按实例筛选：跳过选择存放位置
+                        if (!ConfirmFilterInstanceSave()) return;
+                        Directory.CreateDirectory(filterFolder);
+                        target = Path.Combine(filterFolder, fileName);
+                    }
+                    else
+                    {
+                        target = SystemDialogs.SelectSaveFile(
+                            Lang.Text("Download.Comp.Detail.SelectSaveLocation"),
+                            fileName,
+                            $"{Lang.Text("Download.Comp.Detail.ResourceFile.Filter", desc)}|{(file.Type == Comp.CompType.Mod
+                                ? file.FileName?.EndsWith(".litemod") == true ? "*.litemod" : "*.jar"
+                                : file.FileName?.EndsWith(".mrpack") == true
+                                  || (string.IsNullOrWhiteSpace(file.FileName) && file is { Type: Comp.CompType.ModPack, FromCurseForge: false })
+                                    ? "*.mrpack"
+                                    : "*.zip")}",
+                            defaultFolder);
 
-                    if (!target.Contains('\\')) return;
+                        if (!target.Contains('\\')) return;
+                    }
 
                     // 记录缓存路径
                     var targetDir = Common.GetPathFromFullPath(target);
-                    if (target != defaultFolder)
+                    if (filterFolder is null && target != defaultFolder)
                     {
                         cachedFolder[file.Type] = targetDir;
                     }
@@ -729,11 +765,27 @@ public partial class PageDownloadCompDetail : IPageView
         _targetInstance = additional.TargetVersion;
         _targetLoader = additional.TargetLoader;
         _pageType = additional.ResourceType;
+        _filterInstance = additional.FilterInstance;
     }
 
     private Comp.CompProject? _project;
     private string _targetInstance;
     private Comp.CompLoaderType _targetLoader;
+
+    /// <summary>资源下载页「按实例」筛选选中的实例；非空时保存直接使用该实例，跳过选择存放位置。</summary>
+    private McInstance? _filterInstance;
+
+    /// <summary>按实例筛选时，保存前是否确认。返回 false 表示用户取消。</summary>
+    private bool ConfirmFilterInstanceSave()
+    {
+        if (!Config.Download.Comp.DefaultFilterConfirm)
+            return true;
+        return LauncherUi.Interaction?.ShowConfirm(
+            Lang.Text("Download.Comp.QuickDownload.ConfirmInstance.Message", _filterInstance!.Name),
+            Lang.Text("Download.Comp.QuickDownload.ConfirmInstance.Title"),
+            Lang.Text("Common.Action.Continue"),
+            Lang.Text("Common.Action.Cancel")) == true;
+    }
 
     /// <summary>
     ///     当前页面应展示的内容类别。可能为 Any。

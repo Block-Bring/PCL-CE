@@ -560,6 +560,10 @@
     <sys:String x:Key="Download.Comp.Filter.Version">Version</sys:String>
     <sys:String x:Key="Download.Comp.Filter.Version.AllInputAvailable">All (input available)</sys:String>
     <sys:String x:Key="Download.Comp.Filter.Version.Any">Any</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.VersionMode">Version filter</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.VersionMode.Manual">Manual</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.VersionMode.Instance">By instance</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.Instance">Instance</sys:String>
 
     <!-- Download.Comp.List -->
 
@@ -602,6 +606,8 @@
     <sys:String x:Key="Download.Comp.QuickDownload.ChooseMethod.AskPath">Select a folder…</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.ChooseMethod.CurrentInstance">Download to the current instance</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.ChooseMethod.Title">Select a download destination</sys:String>
+    <sys:String x:Key="Download.Comp.QuickDownload.ConfirmInstance.Message">Download to instance "{0}"?</sys:String>
+    <sys:String x:Key="Download.Comp.QuickDownload.ConfirmInstance.Title">Confirm download location</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.Hint.DownloadStarted">Started downloading: {0}</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.Hint.Loading">Getting resource version info, please wait…</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.Hint.NoCompatibleFile">No compatible version found for this instance</sys:String>
@@ -1482,6 +1488,7 @@
     <sys:String x:Key="Launch.Error.Title">Launch failed</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.HidePrompt">To permanently hide this notice, enter the correct PCL CE development organisation name.</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.InputTitle">Enter the PCL CE development organisation name</sys:String>
+    <sys:String x:Key="Launch.Right.CommunityHint.InputDevTitle">Enter the name of this PCL CE fork's developer</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.Message">You are using PCL CE (PCL Community Edition)! This version is independently developed and maintained, and differs from the original version in its development path and user experience.&#xA;&#xA;If you downloaded the PCL CE by accident, we strongly recommend downloading the original PCL version for long-term use, as this distribution may not be user-friendly for newcomers.&#xA;Additionally, please submit PCL CE issues to the PCL CE repository, and do not report PCL CE issues to the original repository!</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.Title">PCL CE notice</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.WrongInput">Not quite right...</sys:String>
@@ -2635,6 +2642,9 @@
     <sys:String x:Key="Setup.GameManage.Source.UseOfficial">Prefer official sources</sys:String>
     <sys:String x:Key="Setup.GameManage.Source.Version">Version list source</sys:String>
     <sys:String x:Key="Setup.GameManage.Source.Version.Mirror">Prefer mirror sources (recently released versions may be missing)</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.CurseForgeKey">CurseForge API key</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.CurseForgeKey.Hint">Enter your CurseForge API key</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.CurseForgeKey.ToolTip">Required to access CurseForge resources; without it, CurseForge search and downloads will not work. Apply for a free key at console.curseforge.com; it begins with $2a$10$.</sys:String>
 
     <!-- Setup.GameManage.Accessibility -->
 
@@ -2660,6 +2670,12 @@
     <sys:String x:Key="Setup.GameManage.Community.FilenameFormat.Style3">create-1.21.1-6.0.4-Create</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.FilenameFormat.Style4">create-1.21.1-6.0.4</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.FilenameFormat.ToolTip">Default file name format when downloading community resources</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter">Default resource filter</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.ToolTip">Version filter mode used when opening the resource download page</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Manual">Manual</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Instance">By instance</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Confirm">Confirm before downloading to the filtered instance</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Confirm.ToolTip">Ask for confirmation before quick-downloading in instance filter mode. When disabled, downloads start immediately</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.HideQuilt">Hide Quilt loader</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.HideQuilt.ToolTip">Hide Quilt from the community resource loader display.</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.ModManageStyle">Mod management style</sys:String>

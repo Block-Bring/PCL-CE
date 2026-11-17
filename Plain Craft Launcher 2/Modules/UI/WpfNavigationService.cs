@@ -16,7 +16,8 @@ public sealed class WpfCompNavigationService : ICompNavigationService
                     string.Empty,
                     Comp.CompLoaderType.Any,
                     Comp.CompType.Any,
-                    string.Empty)
+                    string.Empty,
+                    null)
             });
     }
 

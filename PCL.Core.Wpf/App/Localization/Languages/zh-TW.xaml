@@ -560,6 +560,10 @@
     <sys:String x:Key="Download.Comp.Filter.Version">版本</sys:String>
     <sys:String x:Key="Download.Comp.Filter.Version.AllInputAvailable">全部 (也可自行輸入)</sys:String>
     <sys:String x:Key="Download.Comp.Filter.Version.Any">任意</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.VersionMode">版本篩選</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.VersionMode.Manual">手動選擇</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.VersionMode.Instance">按實例</sys:String>
+    <sys:String x:Key="Download.Comp.Filter.Instance">實例</sys:String>
 
     <!-- Download.Comp.List -->
 
@@ -602,6 +606,8 @@
     <sys:String x:Key="Download.Comp.QuickDownload.ChooseMethod.AskPath">選擇一個資料夾…</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.ChooseMethod.CurrentInstance">下載到目前選取實例</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.ChooseMethod.Title">選擇下載方式</sys:String>
+    <sys:String x:Key="Download.Comp.QuickDownload.ConfirmInstance.Message">將下載到實例「{0}」，是否繼續？</sys:String>
+    <sys:String x:Key="Download.Comp.QuickDownload.ConfirmInstance.Title">確認下載位置</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.Hint.DownloadStarted">已開始下載：{0}</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.Hint.Loading">正在取得資源版本資訊，請稍候……</sys:String>
     <sys:String x:Key="Download.Comp.QuickDownload.Hint.NoCompatibleFile">未找到適用於該實例的版本</sys:String>
@@ -1482,6 +1488,7 @@
     <sys:String x:Key="Launch.Error.Title">啟動失敗</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.HidePrompt">若要永久隱藏此提示，請輸入正確的 PCL CE 開發組織名稱。</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.InputTitle">輸入 PCL CE 開發組織名稱</sys:String>
+    <sys:String x:Key="Launch.Right.CommunityHint.InputDevTitle">輸入此 PCL CE 分支開發者的名稱</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.Message">你正在使用 PCL CE（PCL 社群版）！此版本為獨立開發和維護，與原版維護路線不同，體驗有所出入。&#xA;&#xA;如果你是意外下載到了 PCL CE ，我們十分建議您下載原版 PCL 長期使用，此發行版本對新手使用者體驗可能不友好。&#xA;此外， PCL CE 的問題請向 PCL CE 的儲存庫提交 Issue，不要向官方儲存庫回饋 PCL CE 的問題哦！</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.Title">PCL CE 提示</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.WrongInput">不太對哦……</sys:String>
@@ -2635,6 +2642,9 @@
     <sys:String x:Key="Setup.GameManage.Source.UseOfficial">盡量使用官方源</sys:String>
     <sys:String x:Key="Setup.GameManage.Source.Version">版本清單源</sys:String>
     <sys:String x:Key="Setup.GameManage.Source.Version.Mirror">盡量使用鏡像來源（可能缺少剛更新的版本）</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.CurseForgeKey">CurseForge API 金鑰</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.CurseForgeKey.Hint">請填寫你的 CurseForge API 金鑰</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.CurseForgeKey.ToolTip">用於存取 CurseForge 取得資源，未填寫時將無法搜尋或下載 CurseForge 資源。可在 console.curseforge.com 免費申請，格式為以 $2a$10$ 開頭的字串。</sys:String>
 
     <!-- Setup.GameManage.Accessibility -->
 
@@ -2660,6 +2670,12 @@
     <sys:String x:Key="Setup.GameManage.Community.FilenameFormat.Style3">create-1.21.1-6.0.4-機械動力</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.FilenameFormat.Style4">create-1.21.1-6.0.4</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.FilenameFormat.ToolTip">下載社群資源時，其預設檔案名的格式</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter">資源下載預設篩選</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.ToolTip">開啟資源下載頁面時預設使用的版本篩選方式</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Manual">手動選擇</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Instance">按實例</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Confirm">下載到篩選實例前確認</sys:String>
+    <sys:String x:Key="Setup.GameManage.Community.DefaultFilter.Confirm.ToolTip">按實例篩選時，快速下載前先確認目標實例；取消勾選則直接下載</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.HideQuilt">不顯示 Quilt 載入器</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.HideQuilt.ToolTip">不在社群資源的載入器展示中顯示 Quilt 載入器</sys:String>
     <sys:String x:Key="Setup.GameManage.Community.ModManageStyle">模組管理樣式</sys:String>

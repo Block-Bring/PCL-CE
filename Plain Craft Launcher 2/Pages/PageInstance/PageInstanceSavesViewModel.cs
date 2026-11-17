@@ -176,7 +176,7 @@ public partial class PageInstanceSavesViewModel : ViewModelBase
         Launcher.frmMain!.PageChange(new FormMain.PageStackData
         {
             page = FormMain.PageType.VersionSaves,
-            additional = (null, null, null, Comp.CompLoaderType.Any, Comp.CompType.Any, folder)!
+            additional = (null, null, null, Comp.CompLoaderType.Any, Comp.CompType.Any, folder, null)!
         });
     }
 

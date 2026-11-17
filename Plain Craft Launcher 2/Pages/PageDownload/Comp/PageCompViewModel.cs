@@ -38,6 +38,12 @@ public partial class PageCompViewModel : ViewModelBase
 
     [ObservableProperty] private bool _supportModrinth = true;
 
+    [ObservableProperty] private bool _isVersionModeVisible = true;
+
+    [ObservableProperty] private bool _isVersionComboVisible = true;
+
+    [ObservableProperty] private bool _isInstanceComboVisible;
+
     [ObservableProperty] private bool _isLoaderLabelVisible = true;
 
     [ObservableProperty] private bool _isLoaderComboVisible = true;

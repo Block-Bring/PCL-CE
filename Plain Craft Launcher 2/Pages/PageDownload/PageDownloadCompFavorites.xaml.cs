@@ -343,7 +343,7 @@ public partial class PageDownloadCompFavorites : IPageView
             {
                 page = FormMain.PageType.CompDetail,
                 additional = (item.Project, new List<string>(), string.Empty, Comp.CompLoaderType.Any,
-                    item.Project.Type, null)
+                    item.Project.Type, null, null)
             });
 
         // 其它事件

@@ -327,7 +327,7 @@ public partial class MyCompItem
     private void _BtnDownload_Click(object sender, EventArgs e)
     {
         if (PanButtons.Opacity > 0d && Tag is Comp.CompProject project)
-            Comp.QuickDownload(project);
+            Comp.QuickDownload(project, ViewModel.QuickDownloadTarget);
     }
 
     private void MyCompItem_Click(MyCompItem sender, EventArgs e)
@@ -349,8 +349,10 @@ public partial class MyCompItem
         var targetType = default(Comp.CompType);
         string? targetVersion = null;
         var targetLoader = Comp.CompLoaderType.Any;
+        McInstance? filterInstance = null;
         if (Launcher.frmMain.pageCurrent.page == FormMain.PageType.Download)
         {
+            filterInstance = sender.ViewModel.QuickDownloadTarget;
             if (Launcher.frmMain.PageCurrentSub == FormMain.PageSubType.DownloadCompFavorites)
             {
                 targetVersion = "";
@@ -415,12 +417,14 @@ public partial class MyCompItem
             var additional = Launcher.frmMain.pageCurrent.additional!.Value;
             targetVersion = additional.TargetVersion;
             targetLoader = additional.TargetLoader;
+            filterInstance = additional.FilterInstance;
         }
 
         Launcher.frmMain.PageChange(new FormMain.PageStackData
         {
             page = FormMain.PageType.CompDetail,
-            additional = ((Comp.CompProject)sender.Tag, [], targetVersion, targetLoader, targetType, null)!
+            additional = ((Comp.CompProject)sender.Tag, [], targetVersion, targetLoader, targetType, null,
+                filterInstance)!
         });
     }
 

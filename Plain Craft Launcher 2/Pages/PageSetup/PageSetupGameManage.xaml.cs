@@ -77,6 +77,7 @@ public partial class PageSetupGameManage : IPageView
         CheckDownloadIgnoreQuilt.Checked = Config.Download.Comp.IgnoreQuilt;
         CheckDownloadAutoInstallDependencies.Checked = Config.Download.Comp.AutoInstallDependencies;
         CheckDownloadClipboard.Checked = Config.Download.Comp.ReadClipboard;
+        CheckDownloadDefaultFilterConfirm.Checked = Config.Download.Comp.DefaultFilterConfirm;
 
         // Minecraft 更新提示
         CheckUpdateRelease.Checked = Config.Tool.ReleaseNotification;
@@ -93,6 +94,7 @@ public partial class PageSetupGameManage : IPageView
         {
             Config.Download.Reset();
             Config.Tool.Reset();
+            Config.Network.CurseForgeApiKey = "";
             Common.Log("[Setup] 已初始化其他页设置");
             HintService.Show(Hints.Success(Lang.Text("Setup.GameManage.Initialized"), log: false));
         }
@@ -121,6 +123,13 @@ public partial class PageSetupGameManage : IPageView
         var sender = (MySlider)senderRaw;
         if (!Animations.AniExitsAnyControl())
             SetByTag(sender.Tag?.ToString(), sender.Value);
+    }
+
+    private void TextBoxChange(object senderRaw, TextChangedEventArgs e)
+    {
+        var sender = (MyTextBox)senderRaw;
+        if (!Animations.AniExitsAnyControl())
+            SetByTag(sender.Tag?.ToString(), sender.Text);
     }
 
     private void ComboChange(object senderRaw, SelectionChangedEventArgs e)

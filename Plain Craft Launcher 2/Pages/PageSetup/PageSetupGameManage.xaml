@@ -27,6 +27,7 @@
                             <RowDefinition Height="27" />
                             <RowDefinition Height="27" />
                             <RowDefinition Height="27" />
+                            <RowDefinition Height="27" />
                         </Grid.RowDefinitions>
                         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="{loc:Loc Setup.GameManage.Source.File}" Margin="0,0,25,0" />
                         <local:MyComboBox x:Name="ComboDownloadSource" Grid.ColumnSpan="2" Tag="ToolDownloadSource"
@@ -97,7 +98,7 @@
                 </StackPanel>
             </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="{loc:Loc Setup.GameManage.Community.Title}">
-                <StackPanel Margin="25,37,25,12">
+                <StackPanel Margin="25,37,25,12" Grid.IsSharedSizeScope="True">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
@@ -113,6 +114,8 @@
                             <RowDefinition Height="28" x:Name="RowQuickDownload" />
                             <RowDefinition Height="7" x:Name="RowQuickDownloadGap" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="7" />
+                            <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{loc:Loc Setup.GameManage.Community.Source}"
                                    Margin="0,0,25,0" />
@@ -159,8 +162,15 @@
                             <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.QuickDownload.AskInstance}" />
                             <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.QuickDownload.AskPath}" />
                         </local:MyComboBox>
+                        <TextBlock Grid.Row="10" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   Text="{loc:Loc Setup.GameManage.Community.CurseForgeKey}" Margin="0,0,25,0" />
+                        <local:MyTextBox x:Name="TextCurseForgeApiKey" Grid.Row="10" Grid.Column="1"
+                                         Tag="SystemCurseForgeApiKey" TextChanged="TextBoxChange"
+                                         Text="{Binding CurseForgeApiKey, Mode=OneWay}"
+                                         HintText="{loc:Loc Setup.GameManage.Community.CurseForgeKey.Hint}"
+                                         ToolTip="{loc:Loc Setup.GameManage.Community.CurseForgeKey.ToolTip}" />
                     </Grid>
-                    <Grid>
+                    <Grid Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
@@ -174,6 +184,84 @@
                         <local:MyCheckBox Margin="0,2,0,4" Text="{loc:Loc Setup.GameManage.Community.AutoInstallDependencies}" ToolTip="{loc:Loc Setup.GameManage.Community.AutoInstallDependencies.ToolTip}"
                                           Grid.Row="1" Height="22" Grid.Column="0" Change="CheckBoxChange"
                                           x:Name="CheckDownloadAutoInstallDependencies" Tag="ToolDownloadAutoInstallDependencies" />
+                    </Grid>
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="7" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="7" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="7" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="7" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="7" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                   Text="{loc:Loc Setup.GameManage.Community.DefaultFilter}"
+                                   Margin="0,12,0,4" Opacity="0.6" FontSize="12" />
+                        <TextBlock Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   Text="{loc:Loc Download.Comp.Type.Mod}" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboDefaultFilterModeMod" Grid.Row="2" Grid.Column="1"
+                                          Tag="ToolDownloadDefaultFilterModeMod"
+                                          SelectedIndex="{Binding DefaultFilterModeModIndex, Mode=OneWay}"
+                                          SelectionChanged="ComboChange"
+                                          ToolTip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" IsSelected="True" />
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </local:MyComboBox>
+                        <TextBlock Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   Text="{loc:Loc Download.Comp.Type.DataPack}" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboDefaultFilterModeDataPack" Grid.Row="4" Grid.Column="1"
+                                          Tag="ToolDownloadDefaultFilterModeDataPack"
+                                          SelectedIndex="{Binding DefaultFilterModeDataPackIndex, Mode=OneWay}"
+                                          SelectionChanged="ComboChange"
+                                          ToolTip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" IsSelected="True" />
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </local:MyComboBox>
+                        <TextBlock Grid.Row="6" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   Text="{loc:Loc Download.Comp.Type.ResourcePack}" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboDefaultFilterModeResourcePack" Grid.Row="6" Grid.Column="1"
+                                          Tag="ToolDownloadDefaultFilterModeResourcePack"
+                                          SelectedIndex="{Binding DefaultFilterModeResourcePackIndex, Mode=OneWay}"
+                                          SelectionChanged="ComboChange"
+                                          ToolTip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" IsSelected="True" />
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </local:MyComboBox>
+                        <TextBlock Grid.Row="8" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   Text="{loc:Loc Download.Comp.Type.Shader}" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboDefaultFilterModeShader" Grid.Row="8" Grid.Column="1"
+                                          Tag="ToolDownloadDefaultFilterModeShader"
+                                          SelectedIndex="{Binding DefaultFilterModeShaderIndex, Mode=OneWay}"
+                                          SelectionChanged="ComboChange"
+                                          ToolTip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" IsSelected="True" />
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </local:MyComboBox>
+                        <TextBlock Grid.Row="10" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                   Text="{loc:Loc Download.Comp.Type.World}" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboDefaultFilterModeWorld" Grid.Row="10" Grid.Column="1"
+                                          Tag="ToolDownloadDefaultFilterModeWorld"
+                                          SelectedIndex="{Binding DefaultFilterModeWorldIndex, Mode=OneWay}"
+                                          SelectionChanged="ComboChange"
+                                          ToolTip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" IsSelected="True" />
+                            <local:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </local:MyComboBox>
+                        <local:MyCheckBox Grid.Row="11" Grid.ColumnSpan="2" Height="22" Margin="0,8,0,4"
+                                          Text="{loc:Loc Setup.GameManage.Community.DefaultFilter.Confirm}"
+                                          ToolTip="{loc:Loc Setup.GameManage.Community.DefaultFilter.Confirm.ToolTip}"
+                                          x:Name="CheckDownloadDefaultFilterConfirm"
+                                          Tag="ToolDownloadDefaultFilterConfirm" Change="CheckBoxChange" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>

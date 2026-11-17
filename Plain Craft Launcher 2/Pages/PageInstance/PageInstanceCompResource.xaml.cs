@@ -2512,7 +2512,7 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
                         PageInstanceLeft.McInstance.Info.HasNeoForge ? Comp.CompLoaderType.NeoForge :
                         PageInstanceLeft.McInstance.Info.HasFabric || moddedLabyMod ? Comp.CompLoaderType.Fabric :
                         Comp.CompLoaderType.Any,
-                        _vm.CompType, null)
+                        _vm.CompType, null, null)
                 });
             }
             else
