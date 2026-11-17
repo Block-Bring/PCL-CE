@@ -15,6 +15,8 @@ public partial class PageToolsLeft : IPageView
     {
         InitializeComponent();
         AnimatedControl = PanItem;
+        // 隐藏联机页时须在首次导航前确定初始页，否则主页面会先构造并初始化联机页
+        pageID = _vm.ResolveInitialPageId(PageSetupUI.HiddenForceShow);
         Loaded += PageLinkLeft_Loaded;
         Unloaded += PageOtherLeft_Unloaded;
     }
@@ -46,7 +48,7 @@ public partial class PageToolsLeft : IPageView
         // 选择第一个未被禁用的子页面
         if (isPageSwitched)
             return;
-        switch (_vm.ResolveInitialPageId())
+        switch (_vm.ResolveInitialPageId(PageSetupUI.HiddenForceShow))
         {
             case FormMain.PageSubType.ToolsTest:
                 ItemTest.SetChecked(true, false, false);
@@ -72,6 +74,9 @@ public partial class PageToolsLeft : IPageView
         {
             case (double)FormMain.PageSubType.ToolsGameLink:
             {
+                if (_vm.ResolveVisiblePageId(FormMain.PageSubType.ToolsGameLink, PageSetupUI.HiddenForceShow)
+                    != FormMain.PageSubType.ToolsGameLink)
+                    break;
                 if (Launcher.frmToolsGameLink is null)
                     Launcher.frmToolsGameLink = new PageToolsGameLink();
                 Launcher.frmToolsGameLink.Reload();
@@ -102,8 +107,8 @@ public partial class PageToolsLeft : IPageView
 
     public object PageGet(FormMain.PageSubType? id = null)
     {
-        var targetID = id ?? pageID;
-        switch (id)
+        var targetID = _vm.ResolveVisiblePageId(id ?? pageID, PageSetupUI.HiddenForceShow);
+        switch (targetID)
         {
             case FormMain.PageSubType.ToolsGameLink:
             {
@@ -129,6 +134,7 @@ public partial class PageToolsLeft : IPageView
     /// </summary>
     public void PageChange(FormMain.PageSubType id)
     {
+        id = _vm.ResolveVisiblePageId(id, PageSetupUI.HiddenForceShow);
         if (pageID == id)
             return;
         Animations.AniBeginControl();
