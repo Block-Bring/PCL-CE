@@ -79,7 +79,10 @@ public partial class NetworkService
 
         services.AddHttpClient(CurseForgeApi).ConfigureHttpClient(c =>
         {
-            c.DefaultRequestHeaders.Add("x-api-key", Secrets.CurseForgeAPIKey);
+            // 每次创建 Client 时重新读取，设置页修改后新请求立即生效
+            var apiKey = Secrets.CurseForgeApiKeyEffective;
+            if (!string.IsNullOrEmpty(apiKey))
+                c.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", apiKey);
             c.BaseAddress = new Uri(CurseForgeApiServer);
         });
         
