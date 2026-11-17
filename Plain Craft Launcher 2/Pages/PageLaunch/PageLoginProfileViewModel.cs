@@ -8,6 +8,7 @@ using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.UI.Dialogs;
 using PCL.Core.Minecraft.Profile;
+using PCL.Core.Minecraft.Profile.Models;
 using PCL.Core.ViewModel;
 
 namespace PCL;
@@ -19,8 +20,6 @@ public partial class PageLoginProfileViewModel : ViewModelBase
 
     [ObservableProperty] private bool _showCreateHint;
 
-    [ObservableProperty] private bool _showMicrosoftHint;
-
     [RelayCommand]
     public async Task ReloadAsync()
     {
@@ -28,7 +27,9 @@ public partial class PageLoginProfileViewModel : ViewModelBase
         var profiles = await RunAsync(ct => Task.Run(() =>
         {
             ProfileService.Load();
-            return ProfileService.Profiles.ToList();
+            return ProfileService.Profiles
+                .Where(profile => profile.ProfileType != ProfileType.Microsoft)
+                .ToList();
         }, ct));
         if (profiles is null) return;
         try
@@ -45,7 +46,6 @@ public partial class PageLoginProfileViewModel : ViewModelBase
         }
 
         var isEmpty = profiles.Count == 0;
-        ShowMicrosoftHint = isEmpty;
         ShowCreateHint = isEmpty;
         if (isEmpty) States.Hint.LaunchWithProfile = true;
     }

@@ -34,11 +34,6 @@ public static partial class GameLaunch
 #if BETA
         _ShowDonateHint();
 #endif
-
-#if DEBUG || DEBUGCI
-        return;
-#endif
-        _ShowPurchaseHint();
     }
 
     private static void _ValidateLaunchPath()
@@ -89,64 +84,20 @@ public static partial class GameLaunch
 
     private static void _ValidateLaunchProfile()
     {
+        if (ProfileService.Current?.ProfileType == ProfileType.Microsoft)
+        {
+            var fallback = ProfileService.Profiles.FirstOrDefault(profile =>
+                profile.ProfileType != ProfileType.Microsoft);
+            if (fallback is null)
+                throw new ArgumentException(Lang.Text("Minecraft.Launch.Precheck.NoProfile"));
+            ProfileService.Select(fallback);
+        }
+
         var checkResult = "";
         LauncherCommon.RunInUiWait(() => checkResult = LoginProfile.IsProfileValid());
-        var selectedProfile = ProfileService.Current;
-
-        if (selectedProfile is null)
-            checkResult = Lang.Text("Minecraft.Launch.Precheck.NoProfile");
-        else if (InstanceList.McMcInstanceSelected!.Info.HasLabyMod)
-            checkResult = _ValidateLabyModProfile(selectedProfile, checkResult);
-        else
-            checkResult = _ValidateLoginRequirementProfile(selectedProfile, checkResult);
 
         if (!string.IsNullOrEmpty(checkResult))
             throw new ArgumentException(checkResult);
-    }
-
-    private static string _ValidateLabyModProfile(McProfile profile, string checkResult)
-    {
-        return profile.ProfileType != ProfileType.Microsoft
-            ? Lang.Text("Minecraft.Launch.Precheck.RequireMicrosoft")
-            : checkResult;
-    }
-
-    private static string _ValidateLoginRequirementProfile(
-        McProfile selectedProfile,
-        string checkResult)
-    {
-        var instance = InstanceList.McMcInstanceSelected!;
-        var loginRequirementSolution = Config.InstanceAuth.LoginRequirementSolution[
-            instance.PathInstance
-        ];
-        return loginRequirementSolution switch
-        {
-            1 => selectedProfile.ProfileType != ProfileType.Microsoft
-                ? Lang.Text("Minecraft.Launch.Precheck.RequireMicrosoft")
-                : checkResult,
-
-            2 => selectedProfile.ProfileType is not (ProfileType.Authlib
-                or ProfileType.YggdrasilConnect)
-                ? Lang.Text("Minecraft.Launch.Precheck.RequireThirdParty")
-                : selectedProfile.Server?.BeforeLast("/authserver")
-                != Config.InstanceAuth.AuthServerAddress[instance.PathInstance]
-                    ? Lang.Text("Minecraft.Launch.Precheck.AuthServerMismatch")
-                    : checkResult,
-
-            3 => selectedProfile.ProfileType switch
-            {
-                ProfileType.Offline => Lang.Text(
-                    "Minecraft.Launch.Precheck.RequireMicrosoftOrThirdParty"),
-
-                ProfileType.Authlib or ProfileType.YggdrasilConnect when
-                    (selectedProfile.Server?.BeforeLast("/authserver")
-                        != Config.InstanceAuth.AuthServerAddress[instance.PathInstance]) =>
-                    Lang.Text("Minecraft.Launch.Precheck.AuthServerMismatch"),
-
-                _ => checkResult
-            },
-            _ => checkResult
-        };
     }
 
 #if BETA
@@ -202,47 +153,6 @@ public static partial class GameLaunch
             "Donate");
     }
 #endif
-
-    private static void _ShowPurchaseHint()
-    {
-        if (ProfileService.HasMicrosoftProfile)
-            return;
-
-        if (Lang.IsFeaturesUnrestricted)
-        {
-            if (LaunchUi.ShowMessageBox(
-                    Lang.Text("Minecraft.Launch.PurchaseHint.Message"),
-                    Lang.Text("Minecraft.Launch.PurchaseHint.Title"),
-                    Lang.Text("Minecraft.Launch.PurchaseHint.Purchase"),
-                    Lang.Text("Minecraft.Launch.PurchaseHint.Later")
-                )
-                == 1)
-                LauncherUi.Interaction?.OpenWebsite(
-                    "https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj");
-            return;
-        }
-
-        switch (LaunchUi.ShowMessageBox(
-                    Lang.Text("Minecraft.Launch.AccountVerification.Message"),
-                    Lang.Text("Minecraft.Launch.AccountVerification.Title"),
-                    Lang.Text("Minecraft.Launch.AccountVerification.Purchase"),
-                    Lang.Text("Minecraft.Launch.AccountVerification.Demo"),
-                    Lang.Text("Minecraft.Launch.AccountVerification.Back"),
-                    button1Action: () =>
-                        LauncherUi.Interaction?.OpenWebsite(
-                            "https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj")))
-        {
-            case 2:
-                LauncherUi.Interaction?.ShowHint(
-                    Lang.Text("Minecraft.Launch.DemoMode"),
-                    NotificationType.Error);
-                currentLaunchOptions!.ExtraArgs.Add("--demo");
-                break;
-
-            case 3:
-                throw new Exception("$$");
-        }
-    }
 
     public static bool isLaunching;
     public static McLaunchOptions? currentLaunchOptions;
