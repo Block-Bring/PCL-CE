@@ -25,6 +25,11 @@ public static partial class GameWatcher
         private readonly object _waitingLogLock = new();
         private readonly string _windowTitle;
 
+        /// <summary>
+        ///     已结束的输出流数量（标准输出、标准错误各计一次）。
+        /// </summary>
+        private int _closedStreams;
+
         private bool _isWindowAppeared;
 
         /// <summary>

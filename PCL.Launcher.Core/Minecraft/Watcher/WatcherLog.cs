@@ -10,11 +10,14 @@ public static partial class GameWatcher
         private void LogReceived(object sender, DataReceivedEventArgs e)
         {
             var line = e.Data;
-            if (line is null)
-                return;
-
             lock (_waitingLogLock)
             {
+                if (line is null)
+                {
+                    _closedStreams++;
+                    return;
+                }
+
                 waitingLog.Add(line);
             }
 
@@ -80,19 +83,21 @@ public static partial class GameWatcher
         {
             try
             {
-                var pendingLogs = TakePendingLogs();
-                if (pendingLogs is null)
-                    return;
-
-                foreach (var line in pendingLogs)
-                    GameLog(line);
-
-                if (State == MinecraftState.Loading)
-                    ProgressUpdate();
+                ProcessPendingLogs();
 
                 if (!gameProcess.HasExited)
                     return;
 
+                // 退出检测独立于日志队列，否则最后几行日志处理完后将永远不会被发现
+                // 进程退出后异步输出可能仍在送达，先等两条输出流结束（最多 2 秒）再处理退出，避免漏掉崩溃日志
+                var deadline = Environment.TickCount64 + 2000;
+                while (!IsOutputStreamClosed && Environment.TickCount64 < deadline)
+                {
+                    Thread.Sleep(10);
+                    ProcessPendingLogs();
+                }
+
+                ProcessPendingLogs();
                 HandleMinecraftProcessExit();
             }
             catch (Exception ex)
@@ -102,6 +107,28 @@ public static partial class GameWatcher
                     "输出 Minecraft 日志失败",
                     LauncherLogLevel.Feedback,
                     userSummary: Lang.Text("Minecraft.Launch.Error.WatcherOperationFailed"));
+            }
+        }
+
+        private void ProcessPendingLogs()
+        {
+            var pendingLogs = TakePendingLogs();
+            if (pendingLogs is null)
+                return;
+
+            foreach (var line in pendingLogs)
+                GameLog(line);
+
+            if (State == MinecraftState.Loading)
+                ProgressUpdate();
+        }
+
+        private bool IsOutputStreamClosed
+        {
+            get
+            {
+                lock (_waitingLogLock)
+                    return _closedStreams >= 2;
             }
         }
 
