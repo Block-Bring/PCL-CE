@@ -235,10 +235,11 @@ public static class LauncherCommon
 
             var directory = Path.GetDirectoryName(fileName);
             if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+            // 必须使用无 BOM 的 UTF-8：options.txt 等游戏文件带 BOM 时首行 version: 无法被识别，游戏会重置整个文件
             File.WriteAllLines(
                 fileName,
                 content.Select(pair => $"{pair.Key}:{pair.Value}"),
-                Encoding.UTF8);
+                new UTF8Encoding(false));
         }
         catch
         {
