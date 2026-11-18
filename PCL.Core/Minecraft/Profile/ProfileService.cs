@@ -290,7 +290,7 @@ public partial class ProfileService
         switch (profileType)
         {
             case ProfileType.Microsoft:
-                return new MicrosoftProvider();
+                return new MicrosoftProvider(Config.Launch.MsClientId);
             case ProfileType.Authlib:
                 return new AuthlibProvider(request.Server ?? existing?.Server ??
                     throw new InvalidOperationException("Authlib profile has no server."));

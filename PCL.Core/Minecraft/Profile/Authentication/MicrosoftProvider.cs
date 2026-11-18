@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using PCL.Core.App;
 using PCL.Core.IO.Net;
 using PCL.Core.IO.Net.Http;
 using PCL.Core.Minecraft.IdentityModel.OAuth;
@@ -13,6 +12,9 @@ using PCL.Core.Minecraft.Profile.Authentication.Utils.Models;
 using PCL.Core.Minecraft.Profile.Models;
 
 namespace PCL.Core.Minecraft.Profile.Authentication;
+
+/// <summary>正版登录 Client ID 的验证结果。</summary>
+public sealed record ClientIdValidationResult(bool IsValid, string? Error, string? ErrorDescription);
 
 /// <summary>
 /// Microsoft consumer account provider. OAuth, Xbox Live, XSTS and Minecraft service calls
@@ -25,11 +27,36 @@ public sealed class MicrosoftProvider : IAuthenticateProvider
 
     private readonly string _clientId;
 
-    public MicrosoftProvider(string? clientId = null)
+    public MicrosoftProvider(string? clientId)
     {
-        _clientId = string.IsNullOrWhiteSpace(clientId) ? Secrets.MSOAuthClientId : clientId;
+        _clientId = clientId?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_clientId))
-            throw new InvalidOperationException("Microsoft OAuth client id is not configured.");
+            throw new InvalidOperationException("未配置正版登录 Client ID（CID），请先在设置中填写。");
+    }
+
+    /// <summary>
+    /// 通过申请设备代码验证 Client ID 是否可用于正版登录。
+    /// 能成功拿到设备代码即说明该应用已在个人 Microsoft 帐户目录注册。
+    /// </summary>
+    public static async Task<ClientIdValidationResult> ValidateClientIdAsync(string? clientId, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(clientId))
+            return new ClientIdValidationResult(false, "empty_client_id", null);
+
+        using var response = await HttpRequest.CreatePost(DeviceEndpoint)
+            .WithContent(new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["client_id"] = clientId.Trim(),
+                ["scope"] = "XboxLive.signin offline_access"
+            }))
+            .SendAsync(NetworkService.GetClient(NetworkService.MicrosoftEntraId), cancellationToken: token)
+            .ConfigureAwait(false);
+        var result = await response.AsJsonAsync<DeviceCodeData>(cancellationToken: token).ConfigureAwait(false);
+        if (result is null)
+            return new ClientIdValidationResult(false, "empty_response", null);
+        return result.IsError
+            ? new ClientIdValidationResult(false, result.Error, result.ErrorDescription)
+            : new ClientIdValidationResult(true, null, null);
     }
 
     public async Task<DeviceCodeData> GetDeviceCodeAsync(CancellationToken token)

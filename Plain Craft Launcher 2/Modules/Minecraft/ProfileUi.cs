@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Windows;
+using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.UI.Hints;
 using PCL.Core.IO.Net;
@@ -241,12 +242,24 @@ public static class ProfileUi
         });
         var selected = selectedDialog.IsConfirmed ? selectedDialog.SelectedIndex : null;
         if (selected is null) return;
-        ProfileService.IsCreatingProfile = true;
         var type = selected.Value switch
         {
-            0 => GameLaunch.McLoginType.Auth,
+            0 => GameLaunch.McLoginType.Ms,
+            1 => GameLaunch.McLoginType.Auth,
             _ => GameLaunch.McLoginType.Legacy
         };
+        if (type == GameLaunch.McLoginType.Ms && string.IsNullOrWhiteSpace(Config.Launch.MsClientId))
+        {
+            await DialogService.Instance.ShowAsync(new TextDialogRequest
+            {
+                Title = Lang.Text("Launch.Account.Profile.MsClientIdRequired.Title"),
+                Content = Lang.Text("Launch.Account.Profile.MsClientIdRequired.Message"),
+                Buttons = DialogButtons.Ok,
+                IsWarn = true
+            });
+            return;
+        }
+        ProfileService.IsCreatingProfile = true;
         if (type == GameLaunch.McLoginType.Auth)
         {
             var serverDialog = await DialogService.Instance.ShowAsync(new AuthServerDialogRequest
@@ -273,6 +286,7 @@ public static class ProfileUi
 
     private static List<IMyRadio> _GetAvailableProfileSelection() =>
     [
+        new MyListItem { Title = Lang.Text("Launch.Account.Type.Microsoft"), Type = MyListItem.CheckType.RadioBox, SvgIcon = "lucide/shield-check" },
         new MyListItem { Title = Lang.Text("Launch.Account.Type.ThirdParty"), Type = MyListItem.CheckType.RadioBox, SvgIcon = "lucide/network" },
         new MyListItem { Title = Lang.Text("Launch.Account.Type.Offline"), Type = MyListItem.CheckType.RadioBox, SvgIcon = "lucide/link-2-off" }
     ];
@@ -532,6 +546,8 @@ public static class ProfileUi
     {
         var profile = ProfileService.Current;
         if (profile is null) return Lang.Text("Minecraft.Launch.Precheck.NoProfile");
+        if (profile.ProfileType == ProfileType.Microsoft && string.IsNullOrWhiteSpace(Config.Launch.MsClientId))
+            return Lang.Text("Launch.Account.Profile.MsClientIdRequired.Message");
         if (profile.ProfileType != ProfileType.Offline) return string.Empty;
         if (string.IsNullOrWhiteSpace(profile.UserName)) return Lang.Text("Launch.Account.Profile.Validation.EmptyUsername");
         if (profile.UserName.Contains('"')) return Lang.Text("Launch.Account.Profile.Validation.QuoteInUsername");

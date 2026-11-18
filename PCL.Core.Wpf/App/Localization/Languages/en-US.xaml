@@ -1673,6 +1673,8 @@
     <sys:String x:Key="Launch.Account.Profile.Error.Read">Failed to read profile list.</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Error.Write">Failed to write profile list.</sys:String>
     <sys:String x:Key="Launch.Account.Profile.ImportExport">Import / Export</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Message">No Microsoft login Client ID (CID) is configured.&#xA;&#xA;Please enter your CID in Settings → Launch → Microsoft login Client ID before creating or using a Microsoft profile.</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Title">Client ID not configured</sys:String>
     <sys:String x:Key="Launch.Account.Profile.RequireMicrosoftHint">A Microsoft profile is required to create profiles using other login types</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Saved">Profile saved!</sys:String>
     <sys:String x:Key="Launch.Account.Profile.SelectHint">Select a profile before launching the game</sys:String>
@@ -2927,6 +2929,16 @@
     <sys:String x:Key="Setup.Launch.Options.MsAuth.Label">Microsoft login method</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.ToolTip">The Web Account Manager has a simpler Microsoft login flow, while the Device Code Flow allows you to authenticate on any device with a web browser.&#xA;If you encounter issues with the Web Account Manager, try using the Device Code Flow.&#xA;If you are temporarily logging in on a public computer, Device Code Flow is recommended.&#xA;&#xA;Due to issues with some dependencies, this option is temporarily forced to Device Code Flow.</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.WebManager">Web Account Manager (temporarily forced to Device Code Flow)</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Hint">Leave empty to disable Microsoft login</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Label">Microsoft login Client ID</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.ToolTip">Enter the Client ID (CID) of your Microsoft OAuth app. Microsoft login uses it for the device code flow; without it you cannot create or use Microsoft profiles.</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify">Verify</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.ToolTip">Requests a device code from Microsoft to check whether this Client ID can be used for Microsoft login.</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Empty">Enter a Client ID before verifying</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Running">Verifying…</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Success">Client ID is valid and can be used for Microsoft login</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Invalid">This Client ID is invalid or not registered for personal Microsoft accounts</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Failed">Client ID verification failed: {0}</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.AboveNormal">High (prioritizes game performance, but may cause other programs to lag)</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.BelowNormal">Low (prioritizes other programs, but may cause the game to lag; suitable for running in the background)</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.High">Very high (use with caution, may severely impact other programs)</sys:String>

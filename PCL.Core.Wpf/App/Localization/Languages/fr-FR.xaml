@@ -432,4 +432,16 @@
     <sys:String x:Key="Launch.Homepage.LoadFailed.Retry">Réessayer</sys:String>
     <sys:String x:Key="Launch.Homepage.SlowWarning">Le chargement de la page d'accueil est trop lent ({0} secondes). Veuillez signaler ce problème à l'auteur de la page d'accueil, ou cesser temporairement d'utiliser cette page.</sys:String>
 
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Hint">Laissez vide pour désactiver la connexion Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Label">Client ID de connexion Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.ToolTip">Saisissez le Client ID (CID) de votre application OAuth Microsoft. La connexion Microsoft l'utilise pour le flux de code d'appareil ; sans lui, impossible de créer ou d'utiliser des profils Microsoft.</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify">Vérifier</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.ToolTip">Demande un code d'appareil à Microsoft pour vérifier si ce Client ID peut être utilisé pour la connexion Microsoft.</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Empty">Saisissez un Client ID avant de vérifier</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Running">Vérification…</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Success">Le Client ID est valide et peut être utilisé pour la connexion Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Invalid">Ce Client ID est invalide ou n'est pas enregistré pour les comptes Microsoft personnels</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Failed">Échec de la vérification du Client ID : {0}</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Message">Aucun Client ID (CID) de connexion Microsoft n'est configuré.&#xA;&#xA;Saisissez votre CID dans « Paramètres → Lancement → Client ID de connexion Microsoft » avant de créer ou d'utiliser un profil Microsoft.</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Title">Client ID non configuré</sys:String>
 </ResourceDictionary>

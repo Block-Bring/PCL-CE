@@ -1,10 +1,12 @@
 using PCL.Core.App;
 using PCL.Core.App.Configuration;
 using PCL.Core.App.Localization;
+using PCL.Core.Minecraft.Profile.Authentication;
 using PCL.Core.UI.Dialogs;
 using PCL.Core.UI.Hints;
 using PCL.Core.Utils.OS;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -220,6 +222,43 @@ public partial class PageSetupLaunch : IPageView
 
     private static void SetByTag(string tag, object value)
         => ConfigService.TrySetValue(tag, value);
+
+    // 验证正版登录 Client ID
+    private async void BtnMsClientIdVerify_Click(object sender, MouseButtonEventArgs e)
+    {
+        var clientId = TextMsClientId.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(clientId))
+        {
+            HintService.Show(Hints.Warning(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Empty")));
+            return;
+        }
+
+        BtnMsClientIdVerify.IsEnabled = false;
+        BtnMsClientIdVerify.Text = Lang.Text("Setup.Launch.Options.MsClientId.Verify.Running");
+        try
+        {
+            var result = await MicrosoftProvider.ValidateClientIdAsync(clientId, CancellationToken.None);
+            if (result.IsValid)
+                HintService.Show(Hints.Success(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Success")));
+            else if (result.Error == "invalid_client" ||
+                     result.ErrorDescription?.Contains("AADSTS700016", StringComparison.Ordinal) == true)
+                HintService.Show(Hints.Error(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Invalid")));
+            else
+                HintService.Show(Hints.Error(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Failed",
+                    $"{result.Error}: {result.ErrorDescription}")));
+        }
+        catch (Exception ex)
+        {
+            Common.Log(ex, "正版登录 Client ID 验证失败", Common.LogLevel.Feedback,
+                userSummary: Lang.Text("Setup.Launch.Options.MsClientId.Verify.Failed", ex.Message));
+            HintService.Show(Hints.Error(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Failed", ex.Message)));
+        }
+        finally
+        {
+            BtnMsClientIdVerify.IsEnabled = true;
+            BtnMsClientIdVerify.Text = Lang.Text("Setup.Launch.Options.MsClientId.Verify");
+        }
+    }
 
     // 切换到实例独立设置
     private void BtnSwitch_Click(object sender, MouseButtonEventArgs e)

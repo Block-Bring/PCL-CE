@@ -8,7 +8,6 @@ using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.UI.Dialogs;
 using PCL.Core.Minecraft.Profile;
-using PCL.Core.Minecraft.Profile.Models;
 using PCL.Core.ViewModel;
 
 namespace PCL;
@@ -27,9 +26,7 @@ public partial class PageLoginProfileViewModel : ViewModelBase
         var profiles = await RunAsync(ct => Task.Run(() =>
         {
             ProfileService.Load();
-            return ProfileService.Profiles
-                .Where(profile => profile.ProfileType != ProfileType.Microsoft)
-                .ToList();
+            return ProfileService.Profiles.ToList();
         }, ct));
         if (profiles is null) return;
         try

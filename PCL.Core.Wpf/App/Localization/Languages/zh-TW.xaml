@@ -1589,6 +1589,8 @@
     <sys:String x:Key="Launch.Account.Profile.Error.Read">讀取檔案清單失敗</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Error.Write">寫入檔案清單失敗</sys:String>
     <sys:String x:Key="Launch.Account.Profile.ImportExport">匯入 / 匯出</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Message">尚未填寫微軟登入 Client ID（CID）。&#xA;&#xA;請先在「設定 → 啟動 → 微軟登入 Client ID」中填寫你的 CID，再新增或使用微軟檔案。</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Title">未填寫 Client ID</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Saved">檔案資訊已儲存！</sys:String>
     <sys:String x:Key="Launch.Account.Profile.SelectHint">選擇一個檔案以啟動遊戲</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Uuid.ChangeTitle">更改檔案 {0} 的 UUID</sys:String>
@@ -2823,6 +2825,16 @@
     <sys:String x:Key="Setup.Launch.Options.MsAuth.Label">微軟驗證方式</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.ToolTip">Web 帳戶管理器的微軟驗證流程更為簡單，而裝置程式碼流允許你在任意裝置上開啟網頁進行驗證。&#xA;如果使用 Web 帳戶管理器登入遇到問題，可以嘗試使用裝置程式碼流。&#xA;如果正在公用電腦上臨時登入帳戶，推薦使用裝置程式碼流。&#xA;&#xA;由於部分依賴元件存在較多問題，該選項暫時強制指定為裝置程式碼流。</sys:String>
     <sys:String x:Key="Setup.Launch.Options.MsAuth.WebManager">Web 帳戶管理器（暫時強制裝置程式碼流）</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Hint">留空則無法使用微軟驗證</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Label">微軟登入 Client ID</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.ToolTip">填寫你的微軟 OAuth 應用程式 Client ID（CID）。微軟驗證依賴它完成裝置程式碼登入，留空時不能新增或使用微軟檔案。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify">驗證</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.ToolTip">向微軟申請一次裝置代碼，檢查該 Client ID 是否可用於正版登入。</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Empty">請先填寫 Client ID 再進行驗證</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Running">驗證中…</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Success">Client ID 有效，可以用於正版驗證</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Invalid">該 Client ID 無效或未在「僅個人 Microsoft 帳戶」類型下註冊</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Failed">Client ID 驗證失敗：{0}</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.AboveNormal">高（優先保證遊戲執行，遊戲效能更佳，但可能造成其他程式卡頓）</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.BelowNormal">低（優先保證其他程式執行，但可能讓遊戲卡頓，適合掛機時使用）</sys:String>
     <sys:String x:Key="Setup.Launch.Options.Priority.High">極高（謹慎使用，可能嚴重影響其他程式執行）</sys:String>

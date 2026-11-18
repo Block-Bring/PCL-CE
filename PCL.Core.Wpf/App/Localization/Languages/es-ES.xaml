@@ -10,4 +10,16 @@
     <sys:String x:Key="Meta.Code">es-ES</sys:String>
     <sys:String x:Key="Meta.Name">Español (España)</sys:String>
 
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Hint">Déjalo vacío para desactivar el inicio de sesión de Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Label">Client ID de inicio de sesión de Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.ToolTip">Introduce el Client ID (CID) de tu aplicación OAuth de Microsoft. El inicio de sesión de Microsoft lo usa para el flujo de código de dispositivo; sin él no puedes crear ni usar perfiles de Microsoft.</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify">Verificar</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.ToolTip">Solicita un código de dispositivo a Microsoft para comprobar si este Client ID se puede usar para el inicio de sesión de Microsoft.</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Empty">Introduce un Client ID antes de verificar</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Running">Verificando…</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Success">El Client ID es válido y se puede usar para el inicio de sesión de Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Invalid">Este Client ID no es válido o no está registrado para cuentas personales de Microsoft</sys:String>
+    <sys:String x:Key="Setup.Launch.Options.MsClientId.Verify.Failed">La verificación del Client ID falló: {0}</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Message">No hay configurado ningún Client ID (CID) de inicio de sesión de Microsoft.&#xA;&#xA;Introduce tu CID en «Ajustes → Inicio → Client ID de inicio de sesión de Microsoft» antes de crear o usar un perfil de Microsoft.</sys:String>
+    <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Title">Client ID no configurado</sys:String>
 </ResourceDictionary>

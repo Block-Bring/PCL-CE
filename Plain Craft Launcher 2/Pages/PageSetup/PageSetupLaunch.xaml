@@ -17,7 +17,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
                             <ColumnDefinition Width="1*" />
-                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="28" />
@@ -35,7 +35,8 @@
                             <RowDefinition Height="28" />
                             <RowDefinition Height="9" />
                             <RowDefinition Height="28" />
-                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="9" />
+                            <RowDefinition Height="28" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{loc:Loc Setup.Launch.Options.InstanceIsolation.Label}"
                                    Margin="0,0,25,0" />
@@ -161,6 +162,19 @@
                             <local:MyComboBoxItem Content="{loc:Loc Setup.Launch.Options.IpStack.JavaDefault}" />
                             <local:MyComboBoxItem Content="{loc:Loc Setup.Launch.Options.IpStack.Ipv6}" />
                         </local:MyComboBox>
+                        <TextBlock VerticalAlignment="Center" Grid.Row="16" HorizontalAlignment="Left" Text="{loc:Loc Setup.Launch.Options.MsClientId.Label}"
+                                   Margin="0,0,25,0"
+                                   ToolTip="{loc:Loc Setup.Launch.Options.MsClientId.ToolTip}" />
+                        <local:MyTextBox x:Name="TextMsClientId" Grid.Row="16" Grid.Column="1"
+                                         Tag="LoginMsClientId" Text="{Binding MsClientId, Mode=OneWay}"
+                                         ValidatedTextChanged="TextBoxChange"
+                                         HintText="{loc:Loc Setup.Launch.Options.MsClientId.Hint}"
+                                         ToolTip="{loc:Loc Setup.Launch.Options.MsClientId.ToolTip}" />
+                        <local:MyButton x:Name="BtnMsClientIdVerify" Grid.Row="16" Grid.Column="2"
+                                        Margin="10,0,0,0" VerticalAlignment="Stretch"
+                                        Text="{loc:Loc Setup.Launch.Options.MsClientId.Verify}"
+                                        ToolTip="{loc:Loc Setup.Launch.Options.MsClientId.Verify.ToolTip}"
+                                        Click="BtnMsClientIdVerify_Click" />
                     </Grid>
                 </StackPanel>
             </local:MyCard>

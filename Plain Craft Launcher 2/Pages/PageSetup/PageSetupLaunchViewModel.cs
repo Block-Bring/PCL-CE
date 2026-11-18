@@ -23,6 +23,8 @@ public partial class PageSetupLaunchViewModel : ViewModelBase
 
     [ObservableProperty] private int _msAuthTypeIndex = Math.Max(0, Config.Launch.LoginMsAuthType);
 
+    [ObservableProperty] private string _msClientId = Config.Launch.MsClientId;
+
     [ObservableProperty] private int _preferredIpStackIndex = Math.Max(0, (int)Config.Launch.PreferredIpStack);
 
     [ObservableProperty] private string _preLaunchText = Config.Launch.PreLaunchCommand;
@@ -69,6 +71,7 @@ public partial class PageSetupLaunchViewModel : ViewModelBase
         WindowWidthText = Config.Launch.GameWindowWidth.ToString();
         WindowHeightText = Config.Launch.GameWindowHeight.ToString();
         MsAuthTypeIndex = Math.Max(0, Config.Launch.LoginMsAuthType);
+        MsClientId = Config.Launch.MsClientId;
         PreferredIpStackIndex = Math.Max(0, (int)Config.Launch.PreferredIpStack);
         RendererIndex = Math.Max(0, Config.Launch.Renderer);
         JvmArgsText = Config.Launch.JvmArgs;

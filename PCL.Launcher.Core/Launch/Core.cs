@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
-using PCL.Core.Minecraft.Profile;
-using PCL.Core.Minecraft.Profile.Models;
 using PCL.Core.Utils;
 
 namespace PCL;
@@ -84,15 +82,6 @@ public static partial class GameLaunch
 
     private static void _ValidateLaunchProfile()
     {
-        if (ProfileService.Current?.ProfileType == ProfileType.Microsoft)
-        {
-            var fallback = ProfileService.Profiles.FirstOrDefault(profile =>
-                profile.ProfileType != ProfileType.Microsoft);
-            if (fallback is null)
-                throw new ArgumentException(Lang.Text("Minecraft.Launch.Precheck.NoProfile"));
-            ProfileService.Select(fallback);
-        }
-
         var checkResult = "";
         LauncherCommon.RunInUiWait(() => checkResult = LoginProfile.IsProfileValid());
 

@@ -620,6 +620,11 @@ public static partial class Config
         /// 正版登录方式。
         /// </summary>
         [ConfigItem<int>("LoginMsAuthType", 1)] public partial int LoginMsAuthType { get; set; }
+
+        /// <summary>
+        /// 正版登录使用的微软 OAuth Client ID（CID）。留空时无法使用正版验证。
+        /// </summary>
+        [ConfigItem<string>("LoginMsClientId", "", ConfigSource.SharedEncrypt)] public partial string MsClientId { get; set; }
     }
 
     /// <summary>
