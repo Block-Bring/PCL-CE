@@ -91,6 +91,7 @@ public class MyComboBox : ComboBox
         InputAnimation.Key("MyComboBox EditableForeground", Uuid);
 
     private string GlyphKey => InputAnimation.Key("MyComboBox Glyph", Uuid);
+    private string PopupFadeKey => InputAnimation.Key("MyComboBox PopupFade", Uuid);
 
     // 自定义属性
 
@@ -461,21 +462,41 @@ public class MyComboBox : ComboBox
     {
         DetachPopupOpacity();
 
-        if (_popup is null || _popup.IsUsingOverlayLayer || _popup.Child is not Control content)
+        if (_popup?.Child is not Control content)
             return;
 
         var owner = TopLevel.GetTopLevel(this);
-        if (owner is null)
+        var targetOpacity = _popup.IsUsingOverlayLayer || owner is null ? 1d : owner.Opacity;
+
+        // 淡入：先把浮层内容置为全透明避免弹出瞬间闪烁，再过渡到目标透明度。
+        // Popup 内容在 DropDownOpened 时通常尚未触发 Loaded，不能走 CanAnimate 的加载检查，
+        // 否则会退化成直接赋终值、看不到淡入。
+        content.Opacity = 0d;
+        if (InputAnimation.IsEnabled && !AnimationService.IsSuspended)
+            AnimationService.Run(
+                new OpacityAnimation(
+                    content,
+                    targetOpacity,
+                    200,
+                    0,
+                    new FluentEaseOut(EasePower.Weak)),
+                PopupFadeKey);
+        else
+            content.Opacity = targetOpacity;
+
+        // 浮层模式下内容位于主窗口浮层中，随窗口一起透明，无需单独同步窗口透明度。
+        if (_popup.IsUsingOverlayLayer || owner is null)
             return;
 
         _popupOpacitySource = owner;
         _popupContent = content;
         owner.PropertyChanged += OwnerTopLevel_PropertyChanged;
-        content.Opacity = owner.Opacity;
     }
 
     private void DetachPopupOpacity()
     {
+        AnimationService.CancelAnimationByName(PopupFadeKey);
+
         if (_popupOpacitySource is not null)
             _popupOpacitySource.PropertyChanged -= OwnerTopLevel_PropertyChanged;
 
