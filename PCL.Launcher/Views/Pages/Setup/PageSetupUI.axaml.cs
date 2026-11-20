@@ -628,7 +628,8 @@ public partial class PageSetupUI : MyPageRight, ISetupResetPage
                     "Setup.Ui.FeatureHide.Item.GameManage"),
                 new HideCheckDefinition(
                     "UiHiddenSetupGameLink",
-                    "Setup.Ui.FeatureHide.Item.GameLink"),
+                    "Setup.Ui.FeatureHide.Item.GameLink",
+                    ForceLocked: true),
                 new HideCheckDefinition("UiHiddenSetupUi", "Setup.Ui.FeatureHide.Item.Ui"),
                 new HideCheckDefinition(
                     "UiHiddenSetupLauncherLanguage",
@@ -646,7 +647,10 @@ public partial class PageSetupUI : MyPageRight, ISetupResetPage
             "Setup.Ui.FeatureHide.SubTools",
             false,
             [
-                new HideCheckDefinition("UiHiddenToolsGameLink", "Setup.Ui.FeatureHide.Item.Lobby"),
+                new HideCheckDefinition(
+                    "UiHiddenToolsGameLink",
+                    "Setup.Ui.FeatureHide.Item.Lobby",
+                    ForceLocked: true),
                 new HideCheckDefinition("UiHiddenToolsTest", "Setup.Ui.FeatureHide.Item.Toolbox")
             ]);
 
@@ -740,6 +744,14 @@ public partial class PageSetupUI : MyPageRight, ISetupResetPage
             check.SetLocalizedValue(MyCheckBox.TextProperty, definition.LangKey!);
         if (definition.TooltipKey is not null)
             check.SetLocalizedValue(ToolTip.TipProperty, definition.TooltipKey);
+        if (definition.ForceLocked)
+        {
+            // 自建构建无可用联机服务器，强制隐藏且不允许修改
+            ConfigService.TrySetValue(definition.ConfigKey, true);
+            check.Checked = true;
+            check.IsEnabled = false;
+        }
+
         check.Change += (_, _) =>
         {
             if (_reloading || check.Tag is not string tag) return;
@@ -756,7 +768,8 @@ public partial class PageSetupUI : MyPageRight, ISetupResetPage
         string ConfigKey,
         string? LangKey,
         string? Literal = null,
-        string? TooltipKey = null);
+        string? TooltipKey = null,
+        bool ForceLocked = false);
 
     #endregion
 }

@@ -179,7 +179,8 @@ public partial class PageInstanceSetupViewModel : ViewModelBase
             RefreshRam();
 
             ServerEnterText = Config.Instance.ServerToEnter[path];
-            LoginRequirement = Math.Clamp(Config.InstanceAuth.LoginRequirementSolution[path], 0, 3);
+            // 自建构建不提供按实例限制登录方式，固定为仅第三方验证（AuthOnly）
+            LoginRequirement = 2;
             AuthServerAddress = Config.InstanceAuth.AuthServerAddress[path];
             AuthDisplayName = Config.InstanceAuth.AuthServerDisplayName[path];
             AuthRegisterAddress = Config.InstanceAuth.AuthRegisterAddress[path];
@@ -683,20 +684,8 @@ public partial class PageInstanceSetupViewModel : ViewModelBase
 
     public static bool CanCreateOtherProfile()
     {
-#if DEBUG || DEBUGCI
+        // 自建构建不限制第三方 / 离线档案的创建
         return true;
-#else
-        try
-        {
-            return ProfileService.HasMicrosoftProfile
-                   || (Lang.IsFeaturesUnrestricted && ProfileService.Profiles.Count > 0)
-                   || !NetworkHelper.IsNetworkAvailable();
-        }
-        catch
-        {
-            return false;
-        }
-#endif
     }
 
     public async Task<bool> ApplyRendererAsync(int index)

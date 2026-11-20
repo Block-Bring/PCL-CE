@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Logging;
 using Avalonia.Markup.Xaml;
+using PCL.Core.App;
 using PCL.Core.App.IoC;
 using PCL.Core.App.Localization;
 using PCL.Core.UI;
@@ -19,6 +20,15 @@ public class App : Application
         Logger.Sink = new BindingLogSink();
 #endif
         AvaloniaXamlLoader.Load(this);
+        // 自建构建没有可用的联机服务器，强制隐藏「设置-联机」与「工具-大厅」
+        // 配置服务在 Loading 阶段才初始化，此处只注册回 hook，不能直接访问 Config
+        Lifecycle.When(
+            LifecycleState.Running,
+            () =>
+            {
+                Config.Preference.Hide.SetupGameLink = true;
+                Config.Preference.Hide.ToolsGameLink = true;
+            });
         LaunchFonts.InstallGlobalFont();
         LocalizationService.LanguageChanged += LaunchFonts.InstallGlobalFont;
         Lifecycle.When(

@@ -13,12 +13,12 @@
             <ui:MyCard Margin="0,0,0,15"
                        Title="{loc:Loc Setup.Launch.Options.Title}">
                 <StackPanel Margin="25,40,25,15">
-                    <Grid RowDefinitions="28,9,28,9,28,9,28,9,28,9,28,9,28,9,28,Auto">
+                    <Grid RowDefinitions="28,9,28,9,28,9,28,9,28,9,28,9,28,9,28,9,28">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"
                                               SharedSizeGroup="Name" />
                             <ColumnDefinition Width="1*" />
-                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Grid.Row="0"
@@ -202,6 +202,28 @@
                             <ui:MyComboBoxItem Content="{loc:Loc Setup.Launch.Options.IpStack.JavaDefault}" />
                             <ui:MyComboBoxItem Content="{loc:Loc Setup.Launch.Options.IpStack.Ipv6}" />
                         </ui:MyComboBox>
+
+                        <TextBlock Grid.Row="17"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Setup.Launch.Options.MsClientId.Label}"
+                                   ToolTip.Tip="{loc:Loc Setup.Launch.Options.MsClientId.ToolTip}" />
+                        <ui:MyTextBox x:Name="TextMsClientId"
+                                      Grid.Row="17"
+                                      Grid.Column="1"
+                                      Text="{Binding MsClientId, Mode=TwoWay}"
+                                      HintText="{loc:Loc Setup.Launch.Options.MsClientId.Hint}"
+                                      ToolTip.Tip="{loc:Loc Setup.Launch.Options.MsClientId.ToolTip}" />
+                        <ui:MyButton x:Name="BtnMsClientIdVerify"
+                                     Grid.Row="17"
+                                     Grid.Column="2"
+                                     Height="26"
+                                     Margin="10,0,0,0"
+                                     VerticalAlignment="Center"
+                                     ColorType="Normal"
+                                     Text="{loc:Loc Setup.Launch.Options.MsClientId.Verify}"
+                                     ToolTip.Tip="{loc:Loc Setup.Launch.Options.MsClientId.Verify.ToolTip}" />
                     </Grid>
                 </StackPanel>
             </ui:MyCard>

@@ -139,6 +139,11 @@ public partial class PageInstanceCompResource
         BtnHintDownload.IsVisible = ViewModel.ShowHintDownload;
         BtnManageSelectAll.Click += (_, _) => ToggleSelectAll();
         BtnManageInfoExport.Click += (_, _) => _ = ExportInfoAsync();
+        BtnManageRename.Click += (_, _) => _ = RenameWithChineseAsync();
+        BtnManageJarInJar.Click += (_, _) => PageRouter.Navigate(
+            PageIds.InstanceSetup,
+            SubPageIds.VersionModJarInJar,
+            PageInstanceLeft.ResolveInstance());
         BtnHintBack.Click += (_, _) => GoBackToParentFolder();
         BtnHintInstall.Click += (_, _) => InstallFromFiles();
         BtnHintDownload.Click += (_, _) => DownloadNew();
@@ -271,7 +276,123 @@ public partial class PageInstanceCompResource
         }
     }
 
+    /// <summary>按当前文件名格式，为缺少中文名的模组文件批量补全中文名。</summary>
+    private async Task RenameWithChineseAsync()
+    {
+        if (_compType != Comp.CompType.Mod)
+            return;
+        if (Math.Max(0, Config.Download.Comp.NameFormatV2) == 4)
+            return;
+
+        var renameList = new List<(LocalComp.LocalCompFile Entry, string TargetName)>();
+        foreach (var modEntity in LocalComp.CompResourceListLoader.output ?? [])
+        {
+            if (modEntity.IsFolder
+                || modEntity.State == LocalComp.LocalCompFile.LocalFileStatus.Unavailable)
+                continue;
+            if (modEntity.Comp is null || modEntity.CompFile is null)
+                continue;
+            if (ContainsCjk(modEntity.RawFileName))
+                continue;
+
+            string targetName;
+            try
+            {
+                targetName = Comp.CompFileNameGet(modEntity.Comp, modEntity.CompFile);
+            }
+            catch (Exception ex)
+            {
+                LauncherCommon.Log(ex, $"生成模组中文文件名失败：{modEntity.RawFileName}");
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(targetName)
+                || targetName == modEntity.RawFileName
+                || !ContainsCjk(targetName))
+                continue;
+            renameList.Add((modEntity, targetName));
+        }
+
+        if (renameList.Count == 0)
+        {
+            HintService.Show(Hints.Info(Lang.Text("Instance.Resource.RenameWithChinese.None")));
+            return;
+        }
+
+        var confirm = await DialogService.Instance.ShowAsync(
+            new TextDialogRequest
+            {
+                Title = Lang.Text("Instance.Resource.RenameWithChinese.Title"),
+                Content = Lang.Text("Instance.Resource.RenameWithChinese.Message", renameList.Count),
+                Buttons = DialogButtons.OkCancel
+            });
+        if (!confirm.IsConfirmed)
+            return;
+
+        var succeeded = 0;
+        var skipped = 0;
+        foreach (var (entry, targetName) in renameList)
+        {
+            var suffix = entry.path.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)
+                ? ".disabled"
+                : entry.path.EndsWith(".old", StringComparison.OrdinalIgnoreCase)
+                    ? ".old"
+                    : "";
+            var directory = Path.GetDirectoryName(entry.path);
+            if (string.IsNullOrEmpty(directory))
+            {
+                skipped++;
+                continue;
+            }
+
+            var newPath = Path.Combine(directory, targetName + suffix);
+            if (string.Equals(newPath, entry.path, StringComparison.OrdinalIgnoreCase)
+                || File.Exists(newPath))
+            {
+                skipped++;
+                continue;
+            }
+
+            try
+            {
+                File.Move(entry.path, newPath);
+                succeeded++;
+            }
+            catch (Exception ex)
+            {
+                skipped++;
+                LauncherCommon.Log(ex, $"重命名模组失败：{entry.RawFileName}");
+            }
+        }
+
+        if (succeeded == 0)
+        {
+            HintService.Show(Hints.Error(Lang.Text("Instance.Resource.RenameWithChinese.Failed")));
+            return;
+        }
+
+        HintService.Show(
+            skipped > 0
+                ? Hints.Info(
+                    Lang.Text("Instance.Resource.RenameWithChinese.Partial", succeeded, skipped))
+                : Hints.Success(
+                    Lang.Text("Instance.Resource.RenameWithChinese.Success", succeeded)));
+
+        if (LoaderRun(Loading.LoaderFolderRunType.ForceRun))
+        {
+            ViewModel.BeginLoading();
+            ViewModel.ResetListViewState();
+            PanSelect.UpdateSelection(false, 0, ViewModel.SelectedText);
+        }
+    }
+
+    private static bool ContainsCjk(string text) =>
+        text.Any(c => c is >= '㐀' and <= '鿿' or >= '豈' and <= '﫿');
+
     #region 加载
+
+    /// <summary>资源列表扫描通常在一秒内完成，缩短空白等待，让加载卡片更早出现。</summary>
+    protected override int PageLoaderWaitDelay => 100;
 
     private void LoaderInit()
     {

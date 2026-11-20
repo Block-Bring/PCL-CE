@@ -1,4 +1,5 @@
 using System.Text.Json;
+using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.Minecraft.IdentityModel;
 using PCL.Core.Minecraft.IdentityModel.OAuth;
@@ -53,6 +54,10 @@ public sealed class ProfileUiBridge : IProfileUi
         var profile = ProfileService.Current;
         if (profile is null)
             return Lang.Text("Minecraft.Launch.Precheck.NoProfile");
+        // 正版档案需要用户自行配置 Client ID 才能启动
+        if (profile.ProfileType == ProfileType.Microsoft
+            && string.IsNullOrWhiteSpace(Config.Launch.MsClientId))
+            return Lang.Text("Launch.Account.Profile.MsClientIdRequired.Message");
 
         var userName = profile.UserName;
         return profile.ProfileType switch

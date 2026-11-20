@@ -29,12 +29,6 @@ public sealed class RestrictedFeaturesBridge : IRestrictedFeatures
         if (!Check(feature)) throw new CancelledException();
     }
 
-    private static RegionAssessment _Assess()
-    {
-#if DEBUG || DEBUGCI
-        return new RegionAssessment(RegionClassification.Other, "debug-build");
-#else
-        return RegionPolicy.Evaluate(RegionPolicy.ReadWindowsSignals());
-#endif
-    }
+    private static RegionAssessment _Assess() =>
+        new(RegionClassification.Other, "region-restriction-disabled");
 }

@@ -134,9 +134,10 @@
 
             <ui:MyCard Margin="0,0,0,15"
                        Title="{loc:Loc Setup.GameManage.Community.Title}">
-                <StackPanel Margin="25,37,25,12">
+                <StackPanel Margin="25,37,25,12"
+                            Grid.IsSharedSizeScope="True">
                     <Grid x:Name="PanCommunityRows"
-                          RowDefinitions="28,7,28,7,28,7,28,7,Auto">
+                          RowDefinitions="28,7,28,7,28,7,28,7,28">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"
                                               SharedSizeGroup="Name" />
@@ -202,6 +203,17 @@
                             <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.QuickDownload.AskInstance}" />
                             <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.QuickDownload.AskPath}" />
                         </ui:MyComboBox>
+
+                        <TextBlock Grid.Row="8"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Setup.GameManage.Community.CurseForgeKey}" />
+                        <ui:MyTextBox x:Name="TextCurseForgeApiKey"
+                                      Grid.Row="8"
+                                      Grid.Column="1"
+                                      Text="{Binding CurseForgeApiKey, Mode=TwoWay}"
+                                      HintText="{loc:Loc Setup.GameManage.Community.CurseForgeKey.Hint}"
+                                      ToolTip.Tip="{loc:Loc Setup.GameManage.Community.CurseForgeKey.ToolTip}" />
                     </Grid>
 
                     <Grid Margin="0,2,0,0"
@@ -218,6 +230,93 @@
                                        Margin="0,2,0,4"
                                        Text="{loc:Loc Setup.GameManage.Community.AutoInstallDependencies}"
                                        ToolTip.Tip="{loc:Loc Setup.GameManage.Community.AutoInstallDependencies.ToolTip}" />
+                    </Grid>
+
+                    <Grid Margin="0,4,0,0"
+                          RowDefinitions="Auto,7,28,7,28,7,28,7,28,7,28,Auto">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"
+                                              SharedSizeGroup="Name" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Grid.ColumnSpan="2"
+                                   Margin="0,12,0,4"
+                                   FontSize="12"
+                                   Opacity="0.6"
+                                   Text="{loc:Loc Setup.GameManage.Community.DefaultFilter}" />
+                        <TextBlock Grid.Row="2"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Download.Comp.Type.Mod}" />
+                        <ui:MyComboBox x:Name="ComboDefaultFilterModeMod"
+                                       Grid.Row="2"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Stretch"
+                                       SelectedIndex="{Binding DefaultFilterModeModIndex, Mode=TwoWay}"
+                                       ToolTip.Tip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" />
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </ui:MyComboBox>
+                        <TextBlock Grid.Row="4"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Download.Comp.Type.DataPack}" />
+                        <ui:MyComboBox x:Name="ComboDefaultFilterModeDataPack"
+                                       Grid.Row="4"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Stretch"
+                                       SelectedIndex="{Binding DefaultFilterModeDataPackIndex, Mode=TwoWay}"
+                                       ToolTip.Tip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" />
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </ui:MyComboBox>
+                        <TextBlock Grid.Row="6"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Download.Comp.Type.ResourcePack}" />
+                        <ui:MyComboBox x:Name="ComboDefaultFilterModeResourcePack"
+                                       Grid.Row="6"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Stretch"
+                                       SelectedIndex="{Binding DefaultFilterModeResourcePackIndex, Mode=TwoWay}"
+                                       ToolTip.Tip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" />
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </ui:MyComboBox>
+                        <TextBlock Grid.Row="8"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Download.Comp.Type.Shader}" />
+                        <ui:MyComboBox x:Name="ComboDefaultFilterModeShader"
+                                       Grid.Row="8"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Stretch"
+                                       SelectedIndex="{Binding DefaultFilterModeShaderIndex, Mode=TwoWay}"
+                                       ToolTip.Tip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" />
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </ui:MyComboBox>
+                        <TextBlock Grid.Row="10"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,25,0"
+                                   Text="{loc:Loc Download.Comp.Type.World}" />
+                        <ui:MyComboBox x:Name="ComboDefaultFilterModeWorld"
+                                       Grid.Row="10"
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Stretch"
+                                       SelectedIndex="{Binding DefaultFilterModeWorldIndex, Mode=TwoWay}"
+                                       ToolTip.Tip="{loc:Loc Setup.GameManage.Community.DefaultFilter.ToolTip}">
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Manual}" />
+                            <ui:MyComboBoxItem Content="{loc:Loc Setup.GameManage.Community.DefaultFilter.Instance}" />
+                        </ui:MyComboBox>
+                        <ui:MyCheckBox x:Name="CheckDownloadDefaultFilterConfirm"
+                                       Grid.Row="11"
+                                       Grid.ColumnSpan="2"
+                                       Height="22"
+                                       Margin="0,8,0,4"
+                                       Text="{loc:Loc Setup.GameManage.Community.DefaultFilter.Confirm}"
+                                       ToolTip.Tip="{loc:Loc Setup.GameManage.Community.DefaultFilter.Confirm.ToolTip}" />
                     </Grid>
                 </StackPanel>
             </ui:MyCard>

@@ -49,6 +49,8 @@ public partial class PageSetupLaunchViewModel : ViewModelBase
 
     [ObservableProperty] private int _msAuthTypeIndex = Math.Max(0, Config.Launch.LoginMsAuthType);
 
+    [ObservableProperty] private string _msClientId = Config.Launch.MsClientId;
+
     [ObservableProperty] private bool _noJavaw = Config.Launch.NoJavaw;
 
     [ObservableProperty] private bool _preLaunchCommandWait = Config.Launch.PreLaunchCommandWait;
@@ -153,6 +155,7 @@ public partial class PageSetupLaunchViewModel : ViewModelBase
             WindowWidthText = Config.Launch.GameWindowWidth.ToString();
             WindowHeightText = Config.Launch.GameWindowHeight.ToString();
             MsAuthTypeIndex = Math.Clamp(Config.Launch.LoginMsAuthType, 0, 1);
+            MsClientId = Config.Launch.MsClientId;
             PreferredIpStackIndex = Math.Clamp((int)Config.Launch.PreferredIpStack, 0, 2);
             RendererIndex = Math.Clamp(Config.Launch.Renderer, 0, 3);
             JvmArgsText = Config.Launch.JvmArgs;
@@ -459,6 +462,11 @@ public partial class PageSetupLaunchViewModel : ViewModelBase
     partial void OnMsAuthTypeIndexChanged(int value)
     {
         if (!_reloading && value >= 0) Config.Launch.LoginMsAuthType = value;
+    }
+
+    partial void OnMsClientIdChanged(string value)
+    {
+        if (!_reloading) Config.Launch.MsClientId = value ?? string.Empty;
     }
 
     partial void OnPreferredIpStackIndexChanged(int value)

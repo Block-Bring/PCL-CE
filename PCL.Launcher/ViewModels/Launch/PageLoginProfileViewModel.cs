@@ -125,6 +125,21 @@ public partial class PageLoginProfileViewModel : ViewModelBase
                 1 => GameLaunch.McLoginType.Auth,
                 _ => GameLaunch.McLoginType.Legacy
             };
+            // 正版登录需要用户自行配置 Client ID
+            if (type == GameLaunch.McLoginType.Ms
+                && string.IsNullOrWhiteSpace(Config.Launch.MsClientId))
+            {
+                await Dialog.ShowAsync(
+                    new TextDialogRequest
+                    {
+                        Title = Lang.Text("Launch.Account.Profile.MsClientIdRequired.Title"),
+                        Content = Lang.Text("Launch.Account.Profile.MsClientIdRequired.Message"),
+                        Buttons = DialogButtons.Ok,
+                        IsWarn = true
+                    });
+                return;
+            }
+
             ProfileService.IsCreatingProfile = true;
             if (type == GameLaunch.McLoginType.Auth && !await TrySelectAuthServerAsync())
             {

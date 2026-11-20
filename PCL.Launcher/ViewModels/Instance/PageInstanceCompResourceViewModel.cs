@@ -121,6 +121,10 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
 
     [ObservableProperty] public partial bool ShowManageDownload { get; set; } = true;
 
+    [ObservableProperty] public partial bool ShowManageRename { get; set; }
+
+    [ObservableProperty] public partial bool ShowManageJarInJar { get; set; }
+
     [ObservableProperty] public partial bool ShowList { get; set; }
 
     [ObservableProperty] public partial bool ShowEmpty { get; set; }
@@ -177,6 +181,8 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
             && (HiddenFeatureState.ForceShow
                 || !Config.Preference.Hide.PageDownload);
         ShowHintDownload = compType != Comp.CompType.Schematic;
+        ShowManageRename = compType == Comp.CompType.Mod;
+        ShowManageJarInJar = compType == Comp.CompType.Mod;
         UpdateFilterState();
         OnPropertyChanged(nameof(SortText));
     }

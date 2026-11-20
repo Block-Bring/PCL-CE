@@ -19,6 +19,7 @@ public partial class MyLocalModItem : Grid
     private readonly ColumnDefinition _columnSubtitle;
     private readonly ColumnDefinition _columnTitle;
     private readonly int _uuid = LauncherCommon.GetUuid();
+    private Border? _buttonContainer;
     private StackPanel? _buttonStack;
     private TranslateTransform? _buttonTransform;
     private IReadOnlyList<MyIconButton> _buttons = [];
@@ -124,9 +125,10 @@ public partial class MyLocalModItem : Grid
     {
         set
         {
-            if (_buttonStack is not null)
+            if (_buttonContainer is not null)
             {
-                Children.Remove(_buttonStack);
+                Children.Remove(_buttonContainer);
+                _buttonContainer = null;
                 _buttonStack = null;
             }
 
@@ -138,13 +140,7 @@ public partial class MyLocalModItem : Grid
             _buttonTransform = new TranslateTransform(4d, 0d);
             _buttonStack = new StackPanel
             {
-                Orientation = Orientation.Horizontal,
-                Opacity = 0d,
-                IsHitTestVisible = false,
-                Margin = new Thickness(0d, 0d, 5d, 0d),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Center,
-                RenderTransform = _buttonTransform
+                Orientation = Orientation.Horizontal
             };
             foreach (var button in _buttons)
             {
@@ -155,9 +151,27 @@ public partial class MyLocalModItem : Grid
                 _buttonStack.Children.Add(button);
             }
 
-            SetColumn(_buttonStack, 5);
-            SetRowSpan(_buttonStack, 99);
-            Children.Add(_buttonStack);
+            // 外层 Border 提供底色，避免叠加显示时文本从按钮缝隙中透出
+            _buttonContainer = new Border
+            {
+                Child = _buttonStack,
+                Opacity = 0d,
+                IsHitTestVisible = false,
+                Margin = new Thickness(0d, 0d, 2d, 0d),
+                Padding = new Thickness(2d, 1d, 2d, 1d),
+                CornerRadius = new CornerRadius(7d),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                RenderTransform = _buttonTransform
+            };
+            ContainerTheme.BindDynamic(
+                _buttonContainer,
+                Border.BackgroundProperty,
+                "ColorBrushBg1");
+
+            SetColumn(_buttonContainer, 5);
+            SetRowSpan(_buttonContainer, 99);
+            Children.Add(_buttonContainer);
             UpdateCompression();
             RefreshColors();
         }
@@ -364,11 +378,11 @@ public partial class MyLocalModItem : Grid
     private void ApplyColorStateInstant(string stateNew, bool showButtons)
     {
         AnimationService.CancelAnimationByName($"LocalModItem Color {_uuid}");
-        if (_buttonStack is not null)
+        if (_buttonContainer is not null)
         {
-            _buttonStack.Opacity = showButtons ? 1d : 0d;
-            _buttonStack.IsHitTestVisible = showButtons;
-            if (_buttonStack.RenderTransform is TranslateTransform transform)
+            _buttonContainer.Opacity = showButtons ? 1d : 0d;
+            _buttonContainer.IsHitTestVisible = showButtons;
+            if (_buttonContainer.RenderTransform is TranslateTransform transform)
                 transform.X = showButtons ? 0d : 4d;
         }
 
@@ -396,23 +410,23 @@ public partial class MyLocalModItem : Grid
 
     private void AddButtonAnimations(List<IAnimation> animations, bool showButtons, int time)
     {
-        if (_buttonStack is null)
+        if (_buttonContainer is null)
             return;
 
-        _buttonStack.IsHitTestVisible = showButtons;
+        _buttonContainer.IsHitTestVisible = showButtons;
         _buttonTransform ??= new TranslateTransform(4d, 0d);
-        if (_buttonStack.RenderTransform is not TranslateTransform)
-            _buttonStack.RenderTransform = _buttonTransform;
+        if (_buttonContainer.RenderTransform is not TranslateTransform)
+            _buttonContainer.RenderTransform = _buttonTransform;
 
         animations.Add(
             new OpacityAnimation(
-                _buttonStack,
-                (showButtons ? 1d : 0d) - _buttonStack.Opacity,
+                _buttonContainer,
+                (showButtons ? 1d : 0d) - _buttonContainer.Opacity,
                 (int)Math.Round(time * (showButtons ? 0.7d : 0.4d)),
                 showButtons ? (int)Math.Round(time * 0.3d) : 0));
         animations.Add(
             new TranslateXAnimation(
-                _buttonStack,
+                _buttonContainer,
                 (showButtons ? 0d : 4d) - _buttonTransform.X,
                 (int)Math.Round(time * (showButtons ? 0.3d : 0.4d)),
                 showButtons ? (int)Math.Round(time * 0.7d) : 0));

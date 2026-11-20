@@ -34,6 +34,9 @@ public partial class MyCompItemViewModel : ViewModelBase
 
     [ObservableProperty] public partial Comp.CompProject? Project { get; set; }
 
+    /// <summary>快速下载的目标实例；非空时直接下载到该实例，跳过选择存放位置的步骤。</summary>
+    public McInstance? QuickDownloadTarget { get; set; }
+
     [ObservableProperty] public partial bool ShowDownload { get; set; } = true;
 
     [ObservableProperty] public partial bool ShowDownloadButton { get; set; }
@@ -88,7 +91,8 @@ public partial class MyCompItemViewModel : ViewModelBase
         bool showMcVersionDesc = true,
         bool showLoaderDesc = true,
         bool showQuickDownload = false,
-        bool showFavoriteButton = true)
+        bool showFavoriteButton = true,
+        McInstance? quickDownloadTarget = null)
     {
         var viewModel = new MyCompItemViewModel();
         viewModel.Update(
@@ -96,7 +100,8 @@ public partial class MyCompItemViewModel : ViewModelBase
             showMcVersionDesc,
             showLoaderDesc,
             showQuickDownload,
-            showFavoriteButton);
+            showFavoriteButton,
+            quickDownloadTarget);
         return viewModel;
     }
 
@@ -105,11 +110,13 @@ public partial class MyCompItemViewModel : ViewModelBase
         bool showMcVersionDesc = true,
         bool showLoaderDesc = true,
         bool showQuickDownload = false,
-        bool showFavoriteButton = true)
+        bool showFavoriteButton = true,
+        McInstance? quickDownloadTarget = null)
     {
         _showMcVersionDesc = showMcVersionDesc;
         _showLoaderDesc = showLoaderDesc;
         Project = project;
+        QuickDownloadTarget = quickDownloadTarget;
         Tags = [.. project.Tags];
         ShowVersion = showMcVersionDesc || showLoaderDesc;
         ShowTime = project.LastUpdate is not null;
@@ -154,7 +161,8 @@ public partial class MyCompItemViewModel : ViewModelBase
             _showMcVersionDesc,
             _showLoaderDesc,
             ShowDownloadButton,
-            ShowFavoriteButton);
+            ShowFavoriteButton,
+            QuickDownloadTarget);
     }
 
     public void PrepareForReuse()

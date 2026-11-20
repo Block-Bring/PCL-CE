@@ -183,6 +183,12 @@ public class MyPageRight : Decorator, IPageView, IPageRightContainer
 
     #region 事件
 
+    /// <summary>
+    ///     加载器运行中进入页面时，等待多久才展示加载卡片（毫秒）。<br />
+    ///     等待期间页面不会显示任何内容，因此加载较快的页面可以覆盖该值以减少空白。
+    /// </summary>
+    protected virtual int PageLoaderWaitDelay => 400;
+
     // 外部触发的事件
     /// <summary>
     /// 需要切换到当前页面，并且原本的 Loaded 事件已执行完成。 需要根据加载器状态，从 Empty 切换到
@@ -419,7 +425,7 @@ public class MyPageRight : Decorator, IPageView, IPageRightContainer
                     if (PageState == PageStates.LoaderWait)
                         PageOnLoaderWaitFinished();
                 },
-                400),
+                PageLoaderWaitDelay),
             PageChangeAnimationKey);
     }
 
@@ -464,8 +470,18 @@ public class MyPageRight : Decorator, IPageView, IPageRightContainer
 
             case PageStates.LoaderEnter:
             {
-                PageState = PageStates.LoaderStayForce;
-                ScheduleLoaderStayFinished();
+                // 卡片入场动画播放期间加载可能已经结束，此时直接收起，避免再强制停留 400ms
+                if (_pageLoader is { State: LoadState.Loading or LoadState.Failed })
+                {
+                    PageState = PageStates.LoaderStayForce;
+                    ScheduleLoaderStayFinished();
+                }
+                else
+                {
+                    PageState = PageStates.LoaderExit;
+                    TriggerExitAnimation(_panLoader);
+                }
+
                 break;
             }
 

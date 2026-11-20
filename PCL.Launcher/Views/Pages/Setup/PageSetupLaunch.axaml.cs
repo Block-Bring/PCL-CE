@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using PCL.Core.App;
 using PCL.Core.App.Configuration;
 using PCL.Core.App.Localization;
+using PCL.Core.Minecraft.Profile.Authentication;
 using PCL.Core.Platform;
 using PCL.Core.UI.Hints;
 using PCL.Core.Utils.OS;
@@ -64,6 +65,7 @@ public partial class PageSetupLaunch : MyPageRight, ISetupResetPage
 
         BtnAdvanceJvmReset.Click += (_, _) => ResetJvmArgs();
         BtnSwitch.Click += (_, _) => SwitchToInstanceSetup();
+        BtnMsClientIdVerify.Click += (_, _) => _ = VerifyMsClientIdAsync();
 
         _ramTimer.Tick += (_, _) => RefreshRamVisual(true);
         PanRamDisplay.SizeChanged += (_, _) => RefreshRamText();
@@ -441,6 +443,57 @@ public partial class PageSetupLaunch : MyPageRight, ISetupResetPage
                 ? "Setup.Launch.Advanced.DisableJlw.Arm64Notice"
                 : "Setup.Launch.Advanced.DisableJlw.ToolTip");
         ToolTip.SetShowOnDisabled(CheckAdvanceDisableJLW, true);
+    }
+
+    /// <summary>向微软申请一次设备代码，验证用户填写的正版登录 Client ID 是否可用。</summary>
+    private async Task VerifyMsClientIdAsync()
+    {
+        var clientId = TextMsClientId.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(clientId))
+        {
+            HintService.Show(Hints.Warning(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Empty")));
+            return;
+        }
+
+        var originalText = BtnMsClientIdVerify.Text;
+        BtnMsClientIdVerify.IsEnabled = false;
+        BtnMsClientIdVerify.Text = Lang.Text("Setup.Launch.Options.MsClientId.Verify.Running");
+        try
+        {
+            var result = await MicrosoftProvider.ValidateClientIdAsync(clientId, CancellationToken.None);
+            if (result.IsValid)
+            {
+                HintService.Show(Hints.Success(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Success")));
+            }
+            else if (result.Error == "invalid_client"
+                     || result.ErrorDescription?.Contains(
+                         "AADSTS700016",
+                         StringComparison.Ordinal) == true)
+            {
+                HintService.Show(Hints.Error(Lang.Text("Setup.Launch.Options.MsClientId.Verify.Invalid")));
+            }
+            else
+            {
+                HintService.Show(Hints.Error(Lang.Text(
+                    "Setup.Launch.Options.MsClientId.Verify.Failed",
+                    $"{result.Error}: {result.ErrorDescription}")));
+            }
+        }
+        catch (Exception ex)
+        {
+            LauncherCommon.Log(
+                ex,
+                "验证正版登录 Client ID 失败",
+                LauncherLogLevel.Feedback,
+                userSummary: Lang.Text(
+                    "Setup.Launch.Options.MsClientId.Verify.Failed",
+                    ex.Message));
+        }
+        finally
+        {
+            BtnMsClientIdVerify.IsEnabled = true;
+            BtnMsClientIdVerify.Text = originalText;
+        }
     }
 
     private void ResetJvmArgs()

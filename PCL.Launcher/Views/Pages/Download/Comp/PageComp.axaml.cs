@@ -67,8 +67,12 @@ public partial class PageComp : UserControl
 
         ComboSearchSource.SelectedIndex = 0;
         ComboSearchSort.SelectedIndex = 0;
+        ComboSearchVersionMode.SelectedIndex = 0;
+        ComboSearchVersionMode.SelectionChanged += (_, _) => OnVersionModeChanged();
         ComboSearchLoader.SelectedIndex = 0;
         ComboSearchShaderLoader.SelectedIndex = 0;
+
+        InstanceList.mcInstanceListLoader.OnStateChangedUi += InstanceList_OnStateChanged;
     }
 
     public PageCompViewModel ViewModel { get; } = new();
@@ -143,6 +147,9 @@ public partial class PageComp : UserControl
 
     public void ApplySearchContext(string? gameVersion, Comp.CompLoaderType modLoader)
     {
+        // 从实例页跳转时保持手动选择
+        ComboSearchVersionMode.SelectedIndex = 0;
+        UpdateFilterControlVisibility();
         ViewModel.ApplySearchContext(gameVersion, modLoader);
         if (!IsInitialized) return;
         TextSearchVersion.Text = ViewModel.SearchVersionText;
@@ -176,7 +183,20 @@ public partial class PageComp : UserControl
     internal void InitializeForLoad(CompSearchContext? context = null)
     {
         if (context is not null)
+        {
             ApplySearchContext(context.TargetGameVersion, context.TargetModLoader);
+        }
+        else if (!IsInitialized)
+        {
+            // 首次加载且非从实例页跳转时，按设置初始化版本筛选方式
+            ComboSearchVersionMode.SelectedIndex = ViewModel.GetDefaultFilterMode();
+            UpdateFilterControlVisibility();
+            if (ViewModel.IsInstanceFilterMode)
+            {
+                EnsureInstanceListLoaded();
+                RefreshInstanceCombo(false);
+            }
+        }
 
         if (IsInitialized) return;
         IsInitialized = true;
@@ -220,12 +240,121 @@ public partial class PageComp : UserControl
 
     private void ApplyPageIdsUi()
     {
-        LabLoader.IsVisible = ViewModel.IsLoaderLabelVisible;
-        ComboSearchLoader.IsVisible = ViewModel.IsLoaderComboVisible;
-        ComboSearchShaderLoader.IsVisible = ViewModel.IsShaderLoaderComboVisible;
+        UpdateFilterControlVisibility();
         BtnSearchInstallModPack.IsVisible = ViewModel.IsInstallModPackVisible;
         ApplySourceVisibility();
     }
+
+    private void UpdateFilterControlVisibility()
+    {
+        ViewModel.SearchVersionModeIndex = ComboSearchVersionMode.SelectedIndex < 0
+            ? 0
+            : ComboSearchVersionMode.SelectedIndex;
+        ViewModel.ApplyPageIdsUi();
+
+        LabVersionMode.IsVisible = ViewModel.IsVersionModeVisible;
+        ComboSearchVersionMode.IsVisible = ViewModel.IsVersionModeVisible;
+        LabVersion.IsVisible = ViewModel.IsVersionComboVisible;
+        TextSearchVersion.IsVisible = ViewModel.IsVersionComboVisible;
+        LabInstance.IsVisible = ViewModel.IsInstanceComboVisible;
+        ComboSearchInstance.IsVisible = ViewModel.IsInstanceComboVisible;
+        LabLoader.IsVisible = ViewModel.IsLoaderLabelVisible;
+        ComboSearchLoader.IsVisible = ViewModel.IsLoaderComboVisible;
+        ComboSearchShaderLoader.IsVisible = ViewModel.IsShaderLoaderComboVisible;
+
+        // 整合包页没有版本筛选方式，沿用原来的列位置
+        var versionColumn = ViewModel.IsVersionModeVisible ? 2 : 0;
+        var loaderColumn = ViewModel.IsVersionModeVisible ? 4 : 2;
+        Grid.SetColumn(LabVersion, versionColumn);
+        Grid.SetColumn(TextSearchVersion, versionColumn + 1);
+        Grid.SetColumn(LabInstance, versionColumn);
+        Grid.SetColumn(ComboSearchInstance, versionColumn + 1);
+        Grid.SetColumn(LabLoader, loaderColumn);
+        Grid.SetColumn(ComboSearchLoader, loaderColumn + 1);
+        Grid.SetColumn(ComboSearchShaderLoader, loaderColumn + 1);
+    }
+
+    private void OnVersionModeChanged()
+    {
+        if (!IsInitialized)
+            return;
+        UpdateFilterControlVisibility();
+        if (!ViewModel.IsInstanceFilterMode)
+            return;
+        EnsureInstanceListLoaded();
+        RefreshInstanceCombo(true);
+    }
+
+    private void InstanceList_OnStateChanged(
+        Loading.LoaderBase sender,
+        LoadState state,
+        LoadState oldState)
+    {
+        if (state != LoadState.Finished || !ViewModel.IsInstanceComboVisible)
+            return;
+        RefreshInstanceCombo(true);
+    }
+
+    private static void EnsureInstanceListLoaded()
+    {
+        if (string.IsNullOrEmpty(GameFolders.mcFolderSelected))
+            return;
+        Loading.LoaderFolderRun(
+            InstanceList.mcInstanceListLoader,
+            GameFolders.mcFolderSelected,
+            Loading.LoaderFolderRunType.RunOnUpdated,
+            1,
+            "versions" + Path.DirectorySeparatorChar);
+    }
+
+    /// <summary>按当前文件夹重新填充实例下拉框，优先保持原选择，其次选中当前实例。</summary>
+    private void RefreshInstanceCombo(bool keepSelection)
+    {
+        var previous = keepSelection
+            ? (ComboSearchInstance.SelectedItem as MyComboBoxItem)?.Tag as McInstance
+            : null;
+        var instances = InstanceList.mcInstanceList.Values
+            .SelectMany(list => list)
+            .Where(instance => instance is not null && instance.state != McInstanceState.Error)
+            .OrderBy(instance => instance.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+
+        ComboSearchInstance.Items.Clear();
+        foreach (var instance in instances)
+            ComboSearchInstance.Items.Add(
+                new MyComboBoxItem
+                {
+                    Content = instance.Name,
+                    Tag = instance
+                });
+
+        var selected = previous is null
+            ? null
+            : instances.FirstOrDefault(instance =>
+                instance.PathInstance == previous.PathInstance);
+        if (selected is null && InstanceList.McMcInstanceSelected is { } current)
+            selected = instances.FirstOrDefault(instance =>
+                instance.PathInstance == current.PathInstance);
+        selected ??= instances.FirstOrDefault();
+        ComboSearchInstance.SelectedItem = ComboSearchInstance.Items
+            .OfType<MyComboBoxItem>()
+            .FirstOrDefault(item => ReferenceEquals(item.Tag, selected));
+
+        ViewModel.FilterInstance = selected;
+    }
+
+    private void SelectCurrentFilterInstance()
+    {
+        if (InstanceList.McMcInstanceSelected is not { } current)
+            return;
+        ComboSearchInstance.SelectedItem = ComboSearchInstance.Items
+            .OfType<MyComboBoxItem>()
+            .FirstOrDefault(item => ReferenceEquals(item.Tag, current));
+        ViewModel.FilterInstance = GetSelectedFilterInstance();
+    }
+
+    private McInstance? GetSelectedFilterInstance()
+        => (ComboSearchInstance.SelectedItem as MyComboBoxItem)?.Tag as McInstance;
 
     private void ApplySourceVisibility()
     {
@@ -296,7 +425,8 @@ public partial class PageComp : UserControl
             item.Project,
             PageIds,
             ViewModel.SelectedGameVersion,
-            ViewModel.SelectedModLoader);
+            ViewModel.SelectedModLoader,
+            ViewModel.IsInstanceFilterMode ? ViewModel.FilterInstance : null);
         var handler = CompDetailRequested;
         if (handler is not null)
         {
@@ -320,6 +450,10 @@ public partial class PageComp : UserControl
     {
         ViewModel.SearchText = PanSearchBox.Text;
         ViewModel.SearchVersionText = TextSearchVersion.Text ?? string.Empty;
+        ViewModel.SearchVersionModeIndex = ComboSearchVersionMode.SelectedIndex < 0
+            ? 0
+            : ComboSearchVersionMode.SelectedIndex;
+        ViewModel.FilterInstance = GetSelectedFilterInstance();
         ViewModel.SearchSourceIndex = ComboSearchSource.SelectedIndex;
         ViewModel.SearchTagIndex = ComboSearchTag.SelectedIndex;
         ViewModel.SearchSortIndex = ComboSearchSort.SelectedIndex;
@@ -396,6 +530,8 @@ public partial class PageComp : UserControl
     private void ResetFilter()
     {
         PanSearchBox.Text = "";
+        ComboSearchVersionMode.SelectedIndex = ViewModel.GetDefaultFilterMode();
+        UpdateFilterControlVisibility();
         TextSearchVersion.SelectedIndex = -1;
         TextSearchVersion.Text = "";
         ComboSearchSource.SelectedIndex = 0;
@@ -403,6 +539,7 @@ public partial class PageComp : UserControl
         ComboSearchLoader.SelectedIndex = 0;
         ComboSearchShaderLoader.SelectedIndex = 0;
         ComboSearchSort.SelectedIndex = 0;
+        SelectCurrentFilterInstance();
         StartNewSearch();
     }
 }
@@ -416,4 +553,5 @@ public sealed record CompDetailParameter(
     Comp.CompProject Project,
     Comp.CompType TargetType,
     string? TargetGameVersion,
-    Comp.CompLoaderType TargetModLoader);
+    Comp.CompLoaderType TargetModLoader,
+    McInstance? FilterInstance = null);

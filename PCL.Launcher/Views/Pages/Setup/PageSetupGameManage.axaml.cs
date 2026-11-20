@@ -45,6 +45,9 @@ public partial class PageSetupGameManage : MyPageRight, ISetupResetPage
         CheckDownloadAutoInstallDependencies.Change += (_, _) => WriteIfReady(() =>
             Config.Download.Comp.AutoInstallDependencies =
                 CheckDownloadAutoInstallDependencies.Checked == true);
+        CheckDownloadDefaultFilterConfirm.Change += (_, _) => WriteIfReady(() =>
+            Config.Download.Comp.DefaultFilterConfirm =
+                CheckDownloadDefaultFilterConfirm.Checked == true);
         CheckDownloadClipboard.Change += (_, _) => WriteIfReady(() =>
             Config.Download.Comp.ReadClipboard = CheckDownloadClipboard.Checked == true);
         CheckUpdateRelease.Change += (_, _) => WriteIfReady(() =>
@@ -70,6 +73,7 @@ public partial class PageSetupGameManage : MyPageRight, ISetupResetPage
         {
             Config.Download.Reset();
             Config.Tool.Reset();
+            Config.Network.CurseForgeApiKey = "";
             HintService.Show(Hints.Success(Lang.Text("Setup.GameManage.Initialized"), false));
         }
         catch (Exception ex)
@@ -110,6 +114,8 @@ public partial class PageSetupGameManage : MyPageRight, ISetupResetPage
             CheckDownloadAutoInstallDependencies.Checked =
                 Config.Download.Comp.AutoInstallDependencies;
             CheckDownloadClipboard.Checked = Config.Download.Comp.ReadClipboard;
+            CheckDownloadDefaultFilterConfirm.Checked =
+                Config.Download.Comp.DefaultFilterConfirm;
 
             CheckUpdateRelease.Checked = Config.Tool.ReleaseNotification;
             CheckUpdateSnapshot.Checked = Config.Tool.SnapshotNotification;

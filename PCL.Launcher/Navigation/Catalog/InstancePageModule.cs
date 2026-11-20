@@ -86,6 +86,14 @@ public sealed class InstancePageModule : IPageModule
             (sp, _) => ActivatorUtilities.CreateInstance<PageInstanceModDisabled>(sp)),
         Sub(
             PageIds.InstanceSetup,
+            SubPageIds.VersionModJarInJar,
+            "Instance.Resource.Mod.JarInJar.Entry",
+            "lucide/git-branch",
+            "resources",
+            12,
+            (sp, _) => ActivatorUtilities.CreateInstance<PageInstanceCompJarInJar>(sp)),
+        Sub(
+            PageIds.InstanceSetup,
             SubPageIds.VersionResourcePack,
             "Instance.Left.ResourcePacks",
             "lucide/layers",

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.ViewModel;
 
@@ -61,6 +62,8 @@ public partial class PageCompViewModel : ViewModelBase
 
     [ObservableProperty] public partial bool IsInstallModPackVisible { get; set; }
 
+    [ObservableProperty] public partial bool IsInstanceComboVisible { get; set; }
+
     [ObservableProperty] public partial bool IsLoaderComboVisible { get; set; } = true;
 
     [ObservableProperty] public partial bool IsLoaderLabelVisible { get; set; } = true;
@@ -70,6 +73,10 @@ public partial class PageCompViewModel : ViewModelBase
     [ObservableProperty] public partial bool IsPagerVisible { get; set; } = true;
 
     [ObservableProperty] public partial bool IsShaderLoaderComboVisible { get; set; }
+
+    [ObservableProperty] public partial bool IsVersionComboVisible { get; set; } = true;
+
+    [ObservableProperty] public partial bool IsVersionModeVisible { get; set; } = true;
 
     [ObservableProperty] public partial double LeftOpacity { get; set; } = 0.2d;
 
@@ -94,6 +101,8 @@ public partial class PageCompViewModel : ViewModelBase
 
     [ObservableProperty] public partial string SearchVersionText { get; set; } = "";
 
+    [ObservableProperty] public partial int SearchVersionModeIndex { get; set; }
+
     [ObservableProperty] public partial bool SupportCurseForge { get; set; } = true;
 
     [ObservableProperty] public partial bool SupportModrinth { get; set; } = true;
@@ -106,6 +115,55 @@ public partial class PageCompViewModel : ViewModelBase
     public ObservableCollection<CompCategoryFilterOption> CategoryOptions { get; } = [];
 
     public Loading.LoaderTask<Comp.CompProjectRequest, int>? Loader { get; private set; }
+
+    /// <summary>「按实例」筛选选中的实例；页面在同步筛选器时写入。</summary>
+    public McInstance? FilterInstance { get; set; }
+
+    public bool IsInstanceFilterMode => PageIds != Comp.CompType.ModPack
+                                        && SearchVersionModeIndex == 1;
+
+    public int GetDefaultFilterMode()
+    {
+        var mode = PageIds switch
+        {
+            Comp.CompType.Mod => Config.Download.Comp.DefaultFilterModeMod,
+            Comp.CompType.DataPack => Config.Download.Comp.DefaultFilterModeDataPack,
+            Comp.CompType.ResourcePack => Config.Download.Comp.DefaultFilterModeResourcePack,
+            Comp.CompType.Shader => Config.Download.Comp.DefaultFilterModeShader,
+            Comp.CompType.World => Config.Download.Comp.DefaultFilterModeWorld,
+            _ => 0
+        };
+        return Math.Clamp(mode, 0, 1);
+    }
+
+    public static Comp.CompLoaderType GetInstanceModLoader(McInstance instance)
+    {
+        if (!instance.IsLoaded)
+            instance.Load();
+        if (instance.Info.HasForge)
+            return Comp.CompLoaderType.Forge;
+        if (instance.Info.HasFabric)
+            return Comp.CompLoaderType.Fabric;
+        if (instance.Info.HasNeoForge)
+            return Comp.CompLoaderType.NeoForge;
+        if (instance.Info.HasQuilt)
+            return Comp.CompLoaderType.Quilt;
+        return Comp.CompLoaderType.Any;
+    }
+
+    /// <summary>由实例推断光影筛选条件：OptiFine 优先，其次 Iris/Oculus，最后视为原版可用。</summary>
+    public static string GetInstanceShaderLoaderTag(McInstance instance)
+    {
+        if (!instance.IsLoaded)
+            instance.Load();
+        if (instance.Info.HasOptiFine
+            || LocalComp.GetModLocalCompByKeywords(instance, "optifine", "optifine") is not null)
+            return "/optifine";
+        if (LocalComp.GetModLocalCompByKeywords(instance, "iris", "iris") is not null
+            || LocalComp.GetModLocalCompByKeywords(instance, "oculus", "oculus") is not null)
+            return "/iris";
+        return "/vanilla";
+    }
 
     public string? SelectedGameVersion => GetGameVersionFilter();
 
@@ -179,13 +237,23 @@ public partial class PageCompViewModel : ViewModelBase
         OnPropertyChanged(nameof(SearchHintText));
         OnPropertyChanged(nameof(LoadText));
         OnPropertyChanged(nameof(LoadingText));
+        OnPropertyChanged(nameof(IsInstanceFilterMode));
         IsInstallModPackVisible = PageIds == Comp.CompType.ModPack;
+        var isInstanceMode = IsInstanceFilterMode;
         var isModLike = PageIds is Comp.CompType.Mod or Comp.CompType.ModPack;
         var isShader = PageIds == Comp.CompType.Shader;
-        IsLoaderLabelVisible = isModLike || isShader;
-        IsLoaderComboVisible = isModLike;
-        IsShaderLoaderComboVisible = isShader;
+        IsVersionModeVisible = PageIds != Comp.CompType.ModPack;
+        IsVersionComboVisible = !isInstanceMode;
+        IsInstanceComboVisible = isInstanceMode;
+        IsLoaderLabelVisible = !isInstanceMode && (isModLike || isShader);
+        IsLoaderComboVisible = !isInstanceMode && isModLike;
+        IsShaderLoaderComboVisible = !isInstanceMode && isShader;
         UpdateLoaderName();
+    }
+
+    partial void OnSearchVersionModeIndexChanged(int value)
+    {
+        ApplyPageIdsUi();
     }
 
     private void UpdateLoaderName()
@@ -383,13 +451,15 @@ public partial class PageCompViewModel : ViewModelBase
                 && PageIds is Comp.CompType.Mod or Comp.CompType.ModPack;
             var showQuickDownload =
                 PageIds is not (Comp.CompType.ModPack or Comp.CompType.DataPack);
+            var quickDownloadTarget = IsInstanceFilterMode ? FilterInstance : null;
             var projects = new List<MyCompItemViewModel>(pageResults.Count);
             projects.AddRange(
                 pageResults.Select(project => MyCompItemViewModel.Create(
                     project,
                     showMcVersionDesc,
                     showLoaderDesc,
-                    showQuickDownload)));
+                    showQuickDownload,
+                    quickDownloadTarget: quickDownloadTarget)));
             Projects = [with(projects)];
             ApplyPagerState();
             ApplyErrorState();
@@ -442,10 +512,12 @@ public partial class PageCompViewModel : ViewModelBase
             : "";
         if (PageIds == Comp.CompType.Shader)
         {
-            var loaderTag = SearchShaderLoaderIndex >= 0
-                && SearchShaderLoaderIndex < ShaderLoaderTags.Length
-                    ? ShaderLoaderTags[SearchShaderLoaderIndex]
-                    : "";
+            var loaderTag = IsInstanceFilterMode
+                ? FilterInstance is null ? "" : GetInstanceShaderLoaderTag(FilterInstance)
+                : SearchShaderLoaderIndex >= 0
+                    && SearchShaderLoaderIndex < ShaderLoaderTags.Length
+                        ? ShaderLoaderTags[SearchShaderLoaderIndex]
+                        : "";
             request.tag = string.IsNullOrEmpty(loaderTag) ? selectedTag : selectedTag + loaderTag;
             request.modLoader = Comp.CompLoaderType.Any;
         }
@@ -460,6 +532,19 @@ public partial class PageCompViewModel : ViewModelBase
 
     private string? GetGameVersionFilter()
     {
+        if (IsInstanceFilterMode)
+        {
+            if (FilterInstance is not { } instance)
+                return null;
+            if (!instance.IsLoaded)
+                instance.Load();
+            var vanillaName = instance.Info.VanillaName;
+            return !string.IsNullOrEmpty(vanillaName)
+                   && (vanillaName.Contains('.') || vanillaName.Contains('w'))
+                ? vanillaName
+                : null;
+        }
+
         var text = SearchVersionText?.Trim();
         if (string.IsNullOrEmpty(text))
             return null;
@@ -475,6 +560,10 @@ public partial class PageCompViewModel : ViewModelBase
     {
         if (PageIds is not (Comp.CompType.Mod or Comp.CompType.ModPack))
             return Comp.CompLoaderType.Any;
+        if (IsInstanceFilterMode)
+            return FilterInstance is null
+                ? Comp.CompLoaderType.Any
+                : GetInstanceModLoader(FilterInstance);
         var index = Math.Clamp(SearchLoaderIndex, 0, ModLoaderTypes.Length - 1);
         var loaderType = ModLoaderTypes[index];
         if (loaderType == Comp.CompLoaderType.Forge

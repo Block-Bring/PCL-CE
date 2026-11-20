@@ -26,6 +26,9 @@ public partial class PageDownloadCompDetail : MyPageRight
 
     private MyCompItem? _compItem;
 
+    /// <summary>资源下载页「按实例」筛选选中的实例；非空时保存直接使用该实例，跳过选择存放位置。</summary>
+    private McInstance? _filterInstance;
+
     public PageDownloadCompDetail()
     {
         InitializeComponent();
@@ -111,6 +114,9 @@ public partial class PageDownloadCompDetail : MyPageRight
 
     internal void PrepareNavigation(PageParameter? parameter)
     {
+        _filterInstance = parameter is CompDetailParameter { FilterInstance: { } filterInstance }
+            ? filterInstance
+            : null;
         var applied = parameter switch
         {
             Comp.CompProject project => ViewModel.ApplyContext(
@@ -479,6 +485,23 @@ public partial class PageDownloadCompDetail : MyPageRight
             CachedFolder[type] = folder;
     }
 
+    /// <summary>按实例筛选时，保存前是否确认。返回 false 表示用户取消。</summary>
+    private async Task<bool> ConfirmFilterInstanceSaveAsync()
+    {
+        if (!Config.Download.Comp.DefaultFilterConfirm)
+            return true;
+        var result = await DialogService.Instance.ShowAsync(
+            new TextDialogRequest
+            {
+                Title = Lang.Text("Download.Comp.QuickDownload.ConfirmInstance.Title"),
+                Content = Lang.Text(
+                    "Download.Comp.QuickDownload.ConfirmInstance.Message",
+                    _filterInstance!.Name),
+                Buttons = DialogButtons.OkCancel
+            });
+        return result.IsConfirmed;
+    }
+
     private async Task SaveFileAsync(Comp.CompFile file)
     {
         try
@@ -489,23 +512,43 @@ public partial class PageDownloadCompDetail : MyPageRight
             var desc = Comp.GetCompTypeName(file.Type);
             var subFolder = GetSubFolder(file.Type);
             var isModpack = file.Type == Comp.CompType.ModPack;
-            var defaultFolder = isModpack
-                ? null
-                : GetDefaultSaveFolder(file, project, subFolder);
-            var target = await SystemDialogs.SelectSaveFileAsync(
-                Lang.Text("Download.Comp.Detail.SelectSaveLocation"),
-                Comp.CompFileNameGet(project, file),
-                BuildSaveFilter(file, desc),
-                defaultFolder);
-            if (string.IsNullOrEmpty(target))
-                return;
+            string target;
+            if (_filterInstance is not null && !isModpack)
+            {
+                // 按实例筛选：跳过选择存放位置，直接保存到该实例
+                if (!await ConfirmFilterInstanceSaveAsync())
+                    return;
+                var filterFolder = Path.Combine(_filterInstance.PathIndie, subFolder);
+                Directory.CreateDirectory(filterFolder);
+                var fileName = string.IsNullOrEmpty(file.FileName)
+                    ? Comp.CompFileNameGet(project, file)
+                    : file.FileName;
+                target = Path.Combine(filterFolder, fileName);
+            }
+            else
+            {
+                var defaultFolder = isModpack
+                    ? null
+                    : GetDefaultSaveFolder(file, project, subFolder);
+                target = await SystemDialogs.SelectSaveFileAsync(
+                    Lang.Text("Download.Comp.Detail.SelectSaveLocation"),
+                    Comp.CompFileNameGet(project, file),
+                    BuildSaveFilter(file, desc),
+                    defaultFolder);
+                if (string.IsNullOrEmpty(target))
+                    return;
+
+                var selectedDir = Path.GetDirectoryName(target);
+                if (string.IsNullOrEmpty(selectedDir))
+                    return;
+                if (string.IsNullOrEmpty(defaultFolder)
+                    || !PathsEqual(selectedDir, defaultFolder))
+                    CachedFolder[file.Type] = selectedDir;
+            }
 
             var targetDir = Path.GetDirectoryName(target);
             if (string.IsNullOrEmpty(targetDir))
                 return;
-            if (string.IsNullOrEmpty(defaultFolder)
-                || !PathsEqual(targetDir, defaultFolder))
-                CachedFolder[file.Type] = targetDir;
 
             var targetInstance = FindInstanceByIndiePath(targetDir);
             if (targetInstance is { IsLoaded: false })
@@ -1256,14 +1299,28 @@ public partial class PageDownloadCompDetail : MyPageRight
     {
         try
         {
-            var defaultFolder = GetWorldDefaultFolder();
-            var target = await SystemDialogs.SelectSaveFileAsync(
-                Lang.Text("Download.Comp.Detail.SelectWorldInstallLocation"),
-                file.FileName ?? "",
-                Lang.Text("Download.Comp.Detail.WorldFile.Filter"),
-                defaultFolder);
-            if (string.IsNullOrEmpty(target))
-                return;
+            string target;
+            if (_filterInstance is not null)
+            {
+                // 按实例筛选：跳过选择存放位置，直接保存到该实例
+                if (!await ConfirmFilterInstanceSaveAsync())
+                    return;
+                var filterFolder = Path.Combine(_filterInstance.PathIndie, "saves");
+                Directory.CreateDirectory(filterFolder);
+                target = Path.Combine(filterFolder, file.FileName ?? "");
+            }
+            else
+            {
+                var defaultFolder = GetWorldDefaultFolder();
+                target = await SystemDialogs.SelectSaveFileAsync(
+                    Lang.Text("Download.Comp.Detail.SelectWorldInstallLocation"),
+                    file.FileName ?? "",
+                    Lang.Text("Download.Comp.Detail.WorldFile.Filter"),
+                    defaultFolder);
+                if (string.IsNullOrEmpty(target))
+                    return;
+            }
+
             var targetFolder = Path.GetDirectoryName(target);
             if (string.IsNullOrEmpty(targetFolder))
                 return;

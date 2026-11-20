@@ -29,7 +29,6 @@ public partial class PageInstanceSetup : MyPageRight
     private MyCheckBox _checkUseProxy = null!;
     private MyComboBox _comboIndie = null!;
     private MyComboBox _comboJava = null!;
-    private MyComboBox _comboLoginRequire = null!;
     private MyComboBox _comboRenderer = null!;
     private MyComboBox _comboTitle = null!;
     private MyHint _hintHttp = null!;
@@ -121,7 +120,6 @@ public partial class PageInstanceSetup : MyPageRight
         _checkUseProxy = CheckAdvanceUseProxyV2;
         _comboIndie = ComboArgumentIndieV2;
         _comboJava = ComboArgumentJava;
-        _comboLoginRequire = ComboServerLoginRequire;
         _comboRenderer = ComboAdvanceRenderer;
         _comboTitle = ComboArgumentTitle;
         _hintHttp = LabServerAuthServerSecurity;
@@ -190,7 +188,6 @@ public partial class PageInstanceSetup : MyPageRight
             if (user && !_syncing) SaveMemoryValues();
         };
 
-        _comboLoginRequire.SelectionChanged += (_, _) => OnLoginRequireChanged();
         _textAuthServer.ValidateRules.Add(new HttpValidator());
         _textAuthServer.LostFocus += (_, _) => NormalizeAuthServer();
         _textAuthRegister.ValidateRules.Add(
@@ -318,7 +315,6 @@ public partial class PageInstanceSetup : MyPageRight
         ApplyRamState();
 
         _textServerEnter.Text = ViewModel.ServerEnterText;
-        _comboLoginRequire.SelectedIndex = ViewModel.LoginRequirement;
         _textAuthServer.Text = ViewModel.AuthServerAddress;
         _textAuthName.Text = ViewModel.AuthDisplayName;
         _textAuthRegister.Text = ViewModel.AuthRegisterAddress;
@@ -396,7 +392,6 @@ public partial class PageInstanceSetup : MyPageRight
         _textAuthRegister.IsEnabled = ViewModel.AuthEditable;
         _textAuthName.IsEnabled = ViewModel.AuthEditable;
         _btnLittleSkin.IsEnabled = ViewModel.AuthEditable;
-        _comboLoginRequire.IsEnabled = ViewModel.AuthEditable;
         _hintLoginLock.IsVisible = ViewModel.LoginLockVisible;
         _btnAuthLock.IsVisible = ViewModel.AuthLockVisible;
         _btnAuthLock.IsEnabled = ViewModel.AuthLockEnabled && _textAuthServer.IsValidated;
@@ -585,30 +580,7 @@ public partial class PageInstanceSetup : MyPageRight
         }
 
         ViewModel.SetAuthServer(_textAuthServer.Text ?? string.Empty);
-        RefreshServerLogin(_comboLoginRequire.SelectedIndex);
-    }
-
-    private void OnLoginRequireChanged()
-    {
-        if (_syncing)
-            return;
-        if (!ViewModel.AuthEditable)
-        {
-            _syncing = true;
-            _comboLoginRequire.SelectedIndex = ViewModel.LoginRequirement;
-            _syncing = false;
-            return;
-        }
-
-        var index = _comboLoginRequire.SelectedIndex;
-        if (index < 0)
-            return;
-        ViewModel.RefreshServerLogin(index);
-        ApplyServerLoginState();
-        _btnAuthLock.IsEnabled = _textAuthServer.IsValidated;
-        if (index is 2 or 3 && !_textAuthServer.IsValidated)
-            return;
-        ViewModel.SetLoginRequirement(index);
+        RefreshServerLogin(2);
     }
 
     private void RefreshServerLogin(int type)
@@ -627,7 +599,7 @@ public partial class PageInstanceSetup : MyPageRight
         _textAuthRegister.Text = ViewModel.AuthRegisterAddress;
         _textAuthName.Text = ViewModel.AuthDisplayName;
         _syncing = false;
-        RefreshServerLogin(_comboLoginRequire.SelectedIndex);
+        RefreshServerLogin(2);
     }
 
     private async Task LockAuthAsync()

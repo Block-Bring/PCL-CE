@@ -61,7 +61,7 @@ public sealed partial class MyCompItem : Grid
         BtnDownload.Click += (_, _) =>
         {
             if (CanInteraction && PanButtons is { Opacity: > 0d })
-                Comp.QuickDownload(Project);
+                Comp.QuickDownload(Project, ViewModel.QuickDownloadTarget);
         };
         BtnFavorite.Click += (_, _) =>
         {

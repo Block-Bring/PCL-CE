@@ -81,6 +81,10 @@ public static class SubPageIds
         PageIds.InstanceSetup,
         "VersionModDisabled");
 
+    public static readonly SubPageId VersionModJarInJar = new(
+        PageIds.InstanceSetup,
+        "VersionModJarInJar");
+
     public static readonly SubPageId VersionResourcePack = new(
         PageIds.InstanceSetup,
         "VersionResourcePack");

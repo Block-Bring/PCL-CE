@@ -25,6 +25,28 @@ public partial class PageSetupGameManageViewModel : ViewModelBase
         0,
         Config.Download.Comp.QuickDownloadBehavior);
 
+    [ObservableProperty] private string _curseForgeApiKey = Config.Network.CurseForgeApiKey;
+
+    [ObservableProperty] private int _defaultFilterModeModIndex = Math.Max(
+        0,
+        Config.Download.Comp.DefaultFilterModeMod);
+
+    [ObservableProperty] private int _defaultFilterModeDataPackIndex = Math.Max(
+        0,
+        Config.Download.Comp.DefaultFilterModeDataPack);
+
+    [ObservableProperty] private int _defaultFilterModeResourcePackIndex = Math.Max(
+        0,
+        Config.Download.Comp.DefaultFilterModeResourcePack);
+
+    [ObservableProperty] private int _defaultFilterModeShaderIndex = Math.Max(
+        0,
+        Config.Download.Comp.DefaultFilterModeShader);
+
+    [ObservableProperty] private int _defaultFilterModeWorldIndex = Math.Max(
+        0,
+        Config.Download.Comp.DefaultFilterModeWorld);
+
     [ObservableProperty]
     private int _translateFormatIndex = Math.Max(0, Config.Download.Comp.NameFormatV2);
 
@@ -69,6 +91,36 @@ public partial class PageSetupGameManageViewModel : ViewModelBase
         if (value >= 0) Config.Download.Comp.QuickDownloadBehavior = value;
     }
 
+    partial void OnDefaultFilterModeModIndexChanged(int value)
+    {
+        if (value >= 0) Config.Download.Comp.DefaultFilterModeMod = value;
+    }
+
+    partial void OnDefaultFilterModeDataPackIndexChanged(int value)
+    {
+        if (value >= 0) Config.Download.Comp.DefaultFilterModeDataPack = value;
+    }
+
+    partial void OnDefaultFilterModeResourcePackIndexChanged(int value)
+    {
+        if (value >= 0) Config.Download.Comp.DefaultFilterModeResourcePack = value;
+    }
+
+    partial void OnDefaultFilterModeShaderIndexChanged(int value)
+    {
+        if (value >= 0) Config.Download.Comp.DefaultFilterModeShader = value;
+    }
+
+    partial void OnDefaultFilterModeWorldIndexChanged(int value)
+    {
+        if (value >= 0) Config.Download.Comp.DefaultFilterModeWorld = value;
+    }
+
+    partial void OnCurseForgeApiKeyChanged(string value)
+    {
+        Config.Network.CurseForgeApiKey = value ?? string.Empty;
+    }
+
     public void Reload()
     {
         HttpModeIndex = Math.Clamp((int)Config.Download.HttpMode, 0, 2);
@@ -78,6 +130,21 @@ public partial class PageSetupGameManageViewModel : ViewModelBase
         CompSourceIndex = Math.Clamp(Config.Download.Comp.CompSourceSolution, 0, 2);
         LocalNameStyleIndex = Math.Clamp(Config.Download.Comp.UiCompNameSolution, 0, 1);
         QuickBehaviorIndex = Math.Clamp(Config.Download.Comp.QuickDownloadBehavior, 0, 3);
+        DefaultFilterModeModIndex = Math.Clamp(Config.Download.Comp.DefaultFilterModeMod, 0, 1);
+        DefaultFilterModeDataPackIndex = Math.Clamp(
+            Config.Download.Comp.DefaultFilterModeDataPack,
+            0,
+            1);
+        DefaultFilterModeResourcePackIndex = Math.Clamp(
+            Config.Download.Comp.DefaultFilterModeResourcePack,
+            0,
+            1);
+        DefaultFilterModeShaderIndex = Math.Clamp(
+            Config.Download.Comp.DefaultFilterModeShader,
+            0,
+            1);
+        DefaultFilterModeWorldIndex = Math.Clamp(Config.Download.Comp.DefaultFilterModeWorld, 0, 1);
+        CurseForgeApiKey = Config.Network.CurseForgeApiKey;
     }
 
     /// <summary>首次把下载线程调到 64 及以上时给出警告。</summary>
