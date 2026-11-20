@@ -15,15 +15,20 @@ public partial class PageInstanceCompJarInJarViewModel : ViewModelBase
 
     [ObservableProperty] private Visibility _panLoadVisibility = Visibility.Visible;
 
-    [ObservableProperty] private Visibility _cardWarningsVisibility = Visibility.Visible;
+    [ObservableProperty] private Visibility _cardWarningsVisibility = Visibility.Collapsed;
 
-    [ObservableProperty] private Visibility _cardConflictsVisibility = Visibility.Visible;
+    [ObservableProperty] private Visibility _cardConflictsVisibility = Visibility.Collapsed;
 
-    [ObservableProperty] private Visibility _sectionRelationsVisibility = Visibility.Visible;
+    [ObservableProperty] private Visibility _sectionRelationsVisibility = Visibility.Collapsed;
 
-    [ObservableProperty] private Visibility _sectionBundledVisibility = Visibility.Visible;
+    [ObservableProperty] private Visibility _sectionBundledVisibility = Visibility.Collapsed;
 
     [ObservableProperty] private Visibility _panEmptyVisibility = Visibility.Collapsed;
+
+    public void ShowLoading()
+    {
+        PanLoadVisibility = Visibility.Visible;
+    }
 
     public void HideLoading()
     {

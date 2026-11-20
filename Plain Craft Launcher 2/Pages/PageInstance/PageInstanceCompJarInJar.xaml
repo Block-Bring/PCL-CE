@@ -142,7 +142,7 @@
         </local:MyCard>
         <local:MyCard HorizontalAlignment="Center" VerticalAlignment="Center" Margin="40,0" SnapsToDevicePixels="True"
                       x:Name="PanLoad" UseAnimation="False" Visibility="{Binding PanLoadVisibility}">
-            <local:MyLoading Text="{loc:Loc Instance.Resource.Loading}" Margin="20,20,20,17" x:Name="Load"
+            <local:MyLoading Text="{loc:Loc Instance.Resource.Mod.JarInJar.Loading}" Margin="20,20,20,17" x:Name="Load"
                              HorizontalAlignment="Center" VerticalAlignment="Center" />
         </local:MyCard>
     </Grid>

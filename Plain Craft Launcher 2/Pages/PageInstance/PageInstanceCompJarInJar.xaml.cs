@@ -1,9 +1,11 @@
 using PCL.Core.App.Localization;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using CompFile = PCL.LocalComp.LocalCompFile;
 
 namespace PCL;
@@ -11,10 +13,18 @@ namespace PCL;
 public partial class PageInstanceCompJarInJar : IPageView
 {
     private readonly PageInstanceCompJarInJarViewModel _vm = new();
+    private readonly Stopwatch _refreshClock = new();
     private JarInJarIndex _index = null!;
     private string? _instanceMc;
     private string _search = "";
     private bool _refreshed;
+    private int _refreshVersion;
+
+    // 单次刷新内的计算缓存：刷新时整体清空，避免同一 mod 被重复解析
+    private readonly Dictionary<CompFile, string> _displayNames = new();
+    private readonly Dictionary<CompFile, List<JarInJarIndex.DepRow>> _ownDependencies = new();
+    private readonly Dictionary<(CompFile Mod, JarInJarIndex.DepRow Dep), JijDepStatus> _depStatuses = new();
+    private readonly Dictionary<string, DataTemplate> _templates = new();
 
     public PageInstanceCompJarInJar()
     {
@@ -28,12 +38,12 @@ public partial class PageInstanceCompJarInJar : IPageView
 
     private void BtnEmptyBack_Click(object sender, MouseButtonEventArgs e) => GoBack();
 
-    private void BtnRefresh_Click(object sender, MouseButtonEventArgs e) => RefreshList();
+    private void BtnRefresh_Click(object sender, MouseButtonEventArgs e) => _ = RefreshListAsync(true);
 
     private void SearchBox_TextChanged(object sender, EventArgs e)
     {
         _search = (SearchBox.Text).Trim();
-        RefreshList();
+        _ = RefreshListAsync(false);
     }
 
     public PageInstanceCompJarInJarViewModel ViewModel => _vm;
@@ -52,7 +62,7 @@ public partial class PageInstanceCompJarInJar : IPageView
         if (_refreshed)
             return;
         _refreshed = true;
-        RefreshList();
+        _ = RefreshListAsync(true);
     }
 
     private bool _Match(CompFile m)
@@ -73,93 +83,156 @@ public partial class PageInstanceCompJarInJar : IPageView
     /// <summary>后台内嵌解析完成后刷新当前页。</summary>
     public void OnJijResolved()
     {
-        if (IsVisible) RefreshList();
+        if (IsVisible) _ = RefreshListAsync(false);
     }
 
     #region 列表构建
 
-    private void RefreshList()
+    private async Task RefreshListAsync(bool showLoading)
     {
-        var output = LocalComp.CompResourceListLoader.output!;
-        if (!_OutputBelongsToCurrentInstance(output))
+        var version = ++_refreshVersion;
+        if (showLoading) _vm.ShowLoading();
+        _refreshClock.Restart();
+        _displayNames.Clear();
+        _ownDependencies.Clear();
+        _depStatuses.Clear();
+
+        try
         {
-            GoBack();
-            return;
-        }
+            // 先完成一次布局并等到空闲，确保加载卡片真的绘制出来、动画跑起来，再开始构建
+            UpdateLayout();
+            await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+            if (version != _refreshVersion) return;
 
-        var allMods = output
-            .Where(m => !m.IsFolder && m.State != CompFile.LocalFileStatus.Unavailable)
-            .ToList();
-        _instanceMc = PageInstanceLeft.McInstance.Info.VanillaName;
-        _index = new JarInJarIndex(allMods, _instanceMc);
-        _vm.HideLoading();
-
-        _vm.WarningRows.Clear();
-        foreach (var host in allMods)
-        {
-            if (host.State != CompFile.LocalFileStatus.Fine) continue;
-            if (_Match(host)) _AppendMissingWarning(host, null, host.DetectedLoader);
-            foreach (var node in _index.GetLoadableEmbedded(host))
-                if (_Match(node))
-                    _AppendMissingWarning(node, host, node.JijLoader);
-        }
-
-        var hasWarning = _vm.WarningRows.Count > 0;
-
-        _vm.ConflictRows.Clear();
-        var conflictCount = 0;
-        foreach (var (a, b, hard) in _index.FindActiveConflicts())
-        {
-            if (!_Match(a) && !_Match(b)) continue;
-            _vm.ConflictRows.Add(_MakeConflictRow(a, b, hard));
-            conflictCount++;
-        }
-
-        PanRelationList.Children.Clear();
-        var relationCount = 0;
-        foreach (var host in allMods)
-        {
-            var hostDeps = JarInJarIndex.BuildOwnDependencies(host, host.DetectedLoader)
-                .Where(d => !DependencyIds.IsPlatform(d.DepId)).ToList();
-            if (hostDeps.Count > 0 && (_Match(host) || hostDeps.Any(d => _Contains(d.DepId))))
+            var output = LocalComp.CompResourceListLoader.output!;
+            if (!_OutputBelongsToCurrentInstance(output))
             {
-                PanRelationList.Children.Add(_MakeRelationCard(host, null, hostDeps));
-                relationCount++;
+                _vm.HideLoading();
+                GoBack();
+                return;
             }
 
-            foreach (var node in _index.GetLoadableEmbedded(host))
+            var allMods = output
+                .Where(m => !m.IsFolder && m.State != CompFile.LocalFileStatus.Unavailable)
+                .ToList();
+            _instanceMc = PageInstanceLeft.McInstance.Info.VanillaName;
+            _index = new JarInJarIndex(allMods, _instanceMc);
+            if (!await YieldIfDueAsync(version)) return;
+
+            _vm.WarningRows.Clear();
+            foreach (var host in allMods)
             {
-                var nodeDeps = JarInJarIndex.BuildOwnDependencies(node, node.JijLoader)
+                if (host.State != CompFile.LocalFileStatus.Fine) continue;
+                if (_Match(host)) _AppendMissingWarning(host, null, host.DetectedLoader);
+                foreach (var node in _index.GetLoadableEmbedded(host))
+                    if (_Match(node))
+                        _AppendMissingWarning(node, host, node.JijLoader);
+                if (!await YieldIfDueAsync(version)) return;
+            }
+
+            // 标记为支持库的模组若没有任何其他模组依赖它，提示可能是多余的
+            foreach (var mod in allMods)
+            {
+                if (mod.State != CompFile.LocalFileStatus.Fine || !_IsLibrary(mod)) continue;
+                if (!_Match(mod) || _index.IsDependedOnByOthers(mod)) continue;
+
+                var text = Lang.Text("Instance.Resource.Mod.JarInJar.Warning.UnusedLibrary", _DisplayName(mod));
+                var otherTags = Comp.GetLocalizedTags(mod.Comp?.Tags.Where(tag =>
+                        !string.Equals(tag, _LibraryTagKey, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+                if (otherTags.Count > 0)
+                    text += Lang.Text("Instance.Resource.Mod.JarInJar.Warning.UnusedLibrary.OtherTags",
+                        string.Join(Lang.Text("Common.Format.ListSeparator"), otherTags));
+
+                _vm.WarningRows.Add(new JijNoticeRow
+                {
+                    Text = text,
+                    Foreground = BrushWarn
+                });
+                if (!await YieldIfDueAsync(version)) return;
+            }
+
+            var hasWarning = _vm.WarningRows.Count > 0;
+
+            _vm.ConflictRows.Clear();
+            var conflictCount = 0;
+            foreach (var (a, b, hard) in _index.FindActiveConflicts())
+            {
+                if (!_Match(a) && !_Match(b)) continue;
+                _vm.ConflictRows.Add(_MakeConflictRow(a, b, hard));
+                conflictCount++;
+                if (!await YieldIfDueAsync(version)) return;
+            }
+
+            PanRelationList.Children.Clear();
+            var relationCount = 0;
+            foreach (var host in allMods)
+            {
+                var hostDeps = _GetOwnDependencies(host, host.DetectedLoader)
                     .Where(d => !DependencyIds.IsPlatform(d.DepId)).ToList();
-                if (nodeDeps.Count == 0) continue;
-                if (!_Match(node) && !nodeDeps.Any(d => _Contains(d.DepId))) continue;
-                PanRelationList.Children.Add(_MakeRelationCard(node, host, nodeDeps));
-                relationCount++;
+                if (hostDeps.Count > 0 && (_Match(host) || hostDeps.Any(d => _Contains(d.DepId))))
+                {
+                    PanRelationList.Children.Add(_MakeRelationCard(host, null, hostDeps));
+                    relationCount++;
+                }
+
+                foreach (var node in _index.GetLoadableEmbedded(host))
+                {
+                    var nodeDeps = _GetOwnDependencies(node, node.JijLoader)
+                        .Where(d => !DependencyIds.IsPlatform(d.DepId)).ToList();
+                    if (nodeDeps.Count == 0) continue;
+                    if (!_Match(node) && !nodeDeps.Any(d => _Contains(d.DepId))) continue;
+                    PanRelationList.Children.Add(_MakeRelationCard(node, host, nodeDeps));
+                    relationCount++;
+                }
+
+                if (!await YieldIfDueAsync(version)) return;
             }
+
+            PanBundledList.Children.Clear();
+            var bundledMods = allMods
+                .Where(m => m.EmbeddedMods is { Count: > 0 } && (_Match(m) || _AnyEmbeddedMatch(m.EmbeddedMods)))
+                .ToList();
+            foreach (var mod in bundledMods)
+            {
+                PanBundledList.Children.Add(_MakeBundledCard(mod));
+                if (!await YieldIfDueAsync(version)) return;
+            }
+
+            // 搜索无结果时不显示"没有模组"空态（避免误导为实例本身没有），仅留空白
+            _vm.ApplySectionVisibility(hasWarning, conflictCount, relationCount, bundledMods.Count,
+                _search.Length > 0);
+            _vm.HideLoading();
         }
+        catch (Exception ex)
+        {
+            Common.Log(ex, "刷新模组关系页失败");
+            if (version == _refreshVersion) _vm.HideLoading();
+        }
+    }
 
-        PanBundledList.Children.Clear();
-        var bundledMods = allMods
-            .Where(m => m.EmbeddedMods is { Count: > 0 } && (_Match(m) || _AnyEmbeddedMatch(m.EmbeddedMods)))
-            .ToList();
-        foreach (var mod in bundledMods)
-            PanBundledList.Children.Add(_MakeBundledCard(mod));
-
-        // 搜索无结果时不显示"没有模组"空态（避免误导为实例本身没有），仅留空白
-        _vm.ApplySectionVisibility(hasWarning, conflictCount, relationCount, bundledMods.Count,
-            _search.Length > 0);
+    /// <summary>构建耗时较长时按帧让出 UI 线程，保证加载动画持续绘制。返回 false 表示本次刷新已被新刷新取代。</summary>
+    private async Task<bool> YieldIfDueAsync(int version)
+    {
+        if (version != _refreshVersion) return false;
+        if (_refreshClock.ElapsedMilliseconds < 16) return true;
+        _refreshClock.Restart();
+        await Dispatcher.Yield(DispatcherPriority.Background);
+        return version == _refreshVersion;
     }
 
     private MyCard _MakeCard(string title, IEnumerable<object> rows, string templateKey)
     {
         var card = new MyCard
         { Title = title, CanSwap = true, Margin = new Thickness(0, 0, 0, 10) };
+        // 创建时就折叠内容：否则首次布局会在 Loaded 折叠前把全部行实例化一遍
         var content = new ItemsControl
         {
             Margin = new Thickness(20, MyCard.SwapedHeight, 18, 30),
             VerticalAlignment = VerticalAlignment.Top,
             ItemsSource = rows,
-            ItemTemplate = (DataTemplate)FindResource(templateKey)
+            ItemTemplate = _GetTemplate(templateKey),
+            Visibility = Visibility.Collapsed
         };
         card.Children.Add(content);
         card.SwapControl = content;
@@ -169,9 +242,9 @@ public partial class PageInstanceCompJarInJar : IPageView
 
     private void _AppendMissingWarning(CompFile mod, CompFile? parent, string? loader)
     {
-        var probed = JarInJarIndex.BuildOwnDependencies(mod, loader)
+        var probed = _GetOwnDependencies(mod, loader)
             .Where(d => !DependencyIds.IsPlatform(d.DepId) && !d.Optional)
-            .Select(d => (d, status: _index.Analyze(mod, d)))
+            .Select(d => (d, status: _Analyze(mod, d)))
             .ToList();
         var missing = probed.Where(x => x.status == JijDepStatus.Missing).Select(x => x.d.DepId).ToList();
         var mismatch = probed.Where(x => x.status == JijDepStatus.VersionMismatch)
@@ -276,7 +349,7 @@ public partial class PageInstanceCompJarInJar : IPageView
         }
     }
 
-    private static JijTreeRow BuildTreeRow(CompFile e, int depth, int versionCount, McConstraintMatcher.MatchKind kind,
+    private JijTreeRow BuildTreeRow(CompFile e, int depth, int versionCount, McConstraintMatcher.MatchKind kind,
         string? versionsTooltip = null, bool selected = false)
     {
         var ver = _CleanPlaceholder(e.Version);
@@ -306,7 +379,7 @@ public partial class PageInstanceCompJarInJar : IPageView
 
     private JijDependencyRow BuildDependencyRow(CompFile mod, JarInJarIndex.DepRow dep)
     {
-        var status = _index.Analyze(mod, dep);
+        var status = _Analyze(mod, dep);
         var optional = dep.Optional;
         var text = dep.Raw is null ? dep.DepId : dep.DepId + " " + dep.Raw;
         var label = "  (" + _StatusLabel(status) + ")";
@@ -374,15 +447,51 @@ public partial class PageInstanceCompJarInJar : IPageView
     // 未替换的版本占位符不显示。
     private static string? _CleanPlaceholder(string? v) => string.IsNullOrEmpty(v) || v.Contains("${") ? null : v;
 
-    private static string _DisplayName(CompFile m)
+    private const string _LibraryTagKey = "Download.Comp.Category.Library";
+
+    private static bool _IsLibrary(CompFile mod) =>
+        mod.Comp?.Tags.Contains(_LibraryTagKey, StringComparer.OrdinalIgnoreCase) == true;
+
+    private string _DisplayName(CompFile m)
     {
+        if (_displayNames.TryGetValue(m, out var cached)) return cached;
+
+        string name;
         if (m.Comp is not null)
         {
             var t = m.Comp.GetControlTitle(false);
-            return t.Key + t.Value;
+            name = t.Key + t.Value;
+        }
+        else
+        {
+            name = string.IsNullOrWhiteSpace(m.Name) ? m.FileName : m.Name;
         }
 
-        return string.IsNullOrWhiteSpace(m.Name) ? m.FileName : m.Name;
+        _displayNames[m] = name;
+        return name;
+    }
+
+    private List<JarInJarIndex.DepRow> _GetOwnDependencies(CompFile mod, string? loader)
+    {
+        if (_ownDependencies.TryGetValue(mod, out var deps)) return deps;
+        deps = JarInJarIndex.BuildOwnDependencies(mod, loader ?? "");
+        _ownDependencies[mod] = deps;
+        return deps;
+    }
+
+    private JijDepStatus _Analyze(CompFile mod, JarInJarIndex.DepRow dep)
+    {
+        if (_depStatuses.TryGetValue((mod, dep), out var status)) return status;
+        status = _index.Analyze(mod, dep);
+        _depStatuses[(mod, dep)] = status;
+        return status;
+    }
+
+    private DataTemplate _GetTemplate(string key)
+    {
+        if (!_templates.TryGetValue(key, out var template))
+            _templates[key] = template = (DataTemplate)FindResource(key);
+        return template;
     }
 
     private static readonly Brush BrushOk = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x50));

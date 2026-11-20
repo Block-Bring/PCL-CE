@@ -37,6 +37,7 @@
     <sys:String x:Key="Common.Dialog.Warning">Warning</sys:String>
     <sys:String x:Key="Common.Error.InvalidJson">Not a valid JSON file</sys:String>
     <sys:String x:Key="Common.Format.DownloadCount">{0} downloads</sys:String>
+    <sys:String x:Key="Common.Format.ListSeparator">, </sys:String>
     <sys:String x:Key="Common.Format.Number.Digit1">{0}k</sys:String>
     <sys:String x:Key="Common.Format.Number.Digit2">{0}M</sys:String>
     <sys:String x:Key="Common.Format.Number.Digit3">{0}B</sys:String>
@@ -1271,6 +1272,7 @@
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Empty.Title">No mod relations to analyze</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Entry">Mod Relations</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Entry.ToolTip">View mod dependencies, missing prerequisites and bundled (Jar-in-Jar) structure</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Loading">Analyzing mod relations</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Message">An overview of dependencies and bundled structure between mods. Disabling or deleting a mod will warn about affected dependencies.</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Message">Embedded mod relationships are still being analyzed in the background. Dependency cascade detection may be incomplete right now and could miss mods that should be handled together. Continue anyway?</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Title">Mods still loading</sys:String>
@@ -1281,6 +1283,8 @@
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Section.Warnings">Warnings</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.Disabled">{0} has disabled prerequisite(s): {1}</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.Missing">{0} is missing prerequisite(s): {1}</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.UnusedLibrary">Library mod {0} may be unused: no other mod depends on it; consider removing it (for reference only)</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.UnusedLibrary.OtherTags">. It also has these tags: {0}</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.VersionMismatch">{0} has version-incompatible prerequisite(s): {1}</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Warning.VersionMismatch.Detail">{0} {1} (detected: {2})</sys:String>
 

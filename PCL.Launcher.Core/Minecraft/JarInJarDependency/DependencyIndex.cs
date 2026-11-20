@@ -193,6 +193,29 @@ public partial class JarInJarIndex
         ];
     }
 
+    /// <summary>
+    ///     是否有其他 Mod（含其内嵌节点）声明依赖该 Mod 提供的任意 ModId。
+    ///     不区分依赖是否可选；已禁用的 Mod 也计入，避免建议删除仍被禁用模组引用的支持库。
+    /// </summary>
+    public bool IsDependedOnByOthers(CompFile mod)
+    {
+        if (!_selfBundled.TryGetValue(mod, out var provided))
+            return false;
+
+        var ids = provided
+            .Select(entry => _Norm(entry.Id))
+            .Where(id => id.Length > 0)
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (ids.Count == 0) return false;
+
+        return _allMods
+            .Where(other => other != mod)
+            .SelectMany(GetDependencies)
+            .Any(dependency => !DependencyIds.IsPlatform(dependency.DepId)
+                               && ids.Contains(_Norm(dependency.DepId)));
+    }
+
     /// <summary>构造某 mod 自身声明的依赖行（不含内嵌上浮），供关系页按 mod 分卡展示。</summary>
     public static List<DepRow> BuildOwnDependencies(CompFile mod, string loader)
     {
