@@ -59,6 +59,7 @@ public partial class MyExtraButton : Grid
     private readonly RectangleGeometry _rectProgress = new(new Rect(0d, 5d, 40d, 35d));
     private bool _isCommandRunning;
     private bool _isLeftMouseHeld;
+    private bool _isPointerOver;
     private bool _isRightClickCommandRunning;
     private bool _isRightMouseHeld;
 
@@ -73,7 +74,11 @@ public partial class MyExtraButton : Grid
         PanProgress.Clip = _rectProgress;
         PanClick.PointerPressed += _OnPointerPressed;
         PanClick.PointerReleased += _OnPointerReleased;
-        PanClick.PointerEntered += (_, _) => RefreshColor();
+        PanClick.PointerEntered += (_, _) =>
+        {
+            _isPointerOver = true;
+            RefreshColor();
+        };
         PanClick.PointerExited += _OnPointerExited;
         KeyboardActivation.Attach(this, PerformClick);
         Loaded += (_, _) => RefreshColor();
@@ -185,7 +190,7 @@ public partial class MyExtraButton : Grid
 
         var key = !IsEnabled
             ? "ColorBrushGray4"
-            : IsPointerOver
+            : _isPointerOver
                 ? "ColorBrush4"
                 : "ColorBrush3";
 
@@ -194,7 +199,7 @@ public partial class MyExtraButton : Grid
             Border.BackgroundProperty,
             key,
             null,
-            !IsEnabled || IsPointerOver ? AnimationColorIn : AnimationColorOut,
+            !IsEnabled || _isPointerOver ? AnimationColorIn : AnimationColorOut,
             true,
             ColorKey);
     }
@@ -465,6 +470,7 @@ public partial class MyExtraButton : Grid
 
     private void _OnPointerExited(object? sender, PointerEventArgs e)
     {
+        _isPointerOver = false;
         _isLeftMouseHeld = false;
         _isRightMouseHeld = false;
         ExtraButtonInteraction.OnPointerExited(this, PanScale, ScaleKey, RefreshColor);

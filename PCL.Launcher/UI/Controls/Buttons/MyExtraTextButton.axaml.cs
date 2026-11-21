@@ -34,6 +34,7 @@ public partial class MyExtraTextButton : Grid
 
     private bool _isCommandRunning;
     private bool _isLeftMouseHeld;
+    private bool _isPointerOver;
     private bool _show;
 
     public MyExtraTextButton()
@@ -44,7 +45,11 @@ public partial class MyExtraTextButton : Grid
         SizeChanged += (_, _) => _SyncCornerRadius();
         PanClick.PointerPressed += _OnPointerPressed;
         PanClick.PointerReleased += _OnPointerReleased;
-        PanClick.PointerEntered += (_, _) => RefreshColor();
+        PanClick.PointerEntered += (_, _) =>
+        {
+            _isPointerOver = true;
+            RefreshColor();
+        };
         PanClick.PointerExited += _OnPointerExited;
         KeyboardActivation.Attach(this, PerformClick);
         Loaded += (_, _) => RefreshColor(false);
@@ -311,7 +316,7 @@ public partial class MyExtraTextButton : Grid
 
         var key = !IsEnabled
             ? "ColorBrushGray4"
-            : IsPointerOver
+            : _isPointerOver
                 ? "ColorBrush4"
                 : "ColorBrush3";
 
@@ -320,7 +325,7 @@ public partial class MyExtraTextButton : Grid
             Border.BackgroundProperty,
             key,
             null,
-            !IsEnabled || IsPointerOver ? AnimationColorIn : AnimationColorOut,
+            !IsEnabled || _isPointerOver ? AnimationColorIn : AnimationColorOut,
             animate,
             ColorKey);
     }
@@ -363,6 +368,7 @@ public partial class MyExtraTextButton : Grid
 
     private void _OnPointerExited(object? sender, PointerEventArgs e)
     {
+        _isPointerOver = false;
         _isLeftMouseHeld = false;
         ExtraButtonInteraction.OnPointerExited(this, PanScale, ScaleKey, () => RefreshColor());
     }
