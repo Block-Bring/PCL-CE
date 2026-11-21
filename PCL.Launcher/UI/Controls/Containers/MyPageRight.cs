@@ -775,12 +775,13 @@ public class MyPageRight : Decorator, IPageView, IPageRightContainer
                         control.RenderTransform = null;
                 }
 
-                foreach (var control in GetAllAnimControls(element))
+                // 附加按钮由 Show 自行管理显隐，退场后处于不可见状态，不能被可见性过滤掉
+                foreach (var control in GetAllAnimControls(element, true))
                     if (control is MyExtraTextButton extraTextButton)
                     {
                         extraTextButton.Show = true;
                     }
-                    else
+                    else if (control.IsVisible)
                     {
                         control.Opacity = 1d;
                         control.RenderTransform = null;
@@ -805,12 +806,13 @@ public class MyPageRight : Decorator, IPageView, IPageRightContainer
                     control.RenderTransform = null;
             }
 
-            foreach (var control in GetAllAnimControls(element))
+            // 附加按钮由 Show 自行管理显隐，退场后处于不可见状态，不能被可见性过滤掉
+            foreach (var control in GetAllAnimControls(element, true))
                 if (control is MyExtraTextButton extraTextButton)
                 {
                     extraTextButton.Show = true;
                 }
-                else
+                else if (control.IsVisible)
                 {
                     control.Opacity = 0d;
                     control.RenderTransform = new TranslateTransform(0d, -16d);
