@@ -1693,7 +1693,6 @@
     <sys:String x:Key="Launch.Account.Profile.ImportExport">导入 / 导出</sys:String>
     <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Message">尚未填写正版登录 Client ID（CID）。&#xA;&#xA;请先在「设置 → 启动 → 正版登录 Client ID」中填写你的 CID，再新建或使用正版档案。</sys:String>
     <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Title">未填写 Client ID</sys:String>
-    <sys:String x:Key="Launch.Account.Profile.RequireMicrosoftHint">需要先进行一次正版验证才能使用其他验证方式</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Saved">档案信息已保存！</sys:String>
     <sys:String x:Key="Launch.Account.Profile.SelectHint">选择一个档案以启动游戏</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Uuid.ChangeTitle">更改档案 {0} 的 UUID</sys:String>

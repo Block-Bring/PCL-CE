@@ -465,7 +465,7 @@ public partial class PageInstanceSetupViewModel : ViewModelBase
         var editable = Instance is null || !Config.InstanceAuth.AuthLocked[Instance.PathInstance];
         AuthVisible = visible;
         AuthEditable = editable;
-        NewProfileVisible = visible && CanCreateOtherProfile();
+        NewProfileVisible = visible;
         AuthLockVisible = type is not (0 or 1);
         AuthLockEnabled = editable;
         LoginLockVisible = !editable;
@@ -665,8 +665,6 @@ public partial class PageInstanceSetupViewModel : ViewModelBase
     [RelayCommand]
     public void CreateServerProfile()
     {
-        if (!CanCreateOtherProfile())
-            return;
         PageLoginAuth.PendingAuthServer = AuthServerAddress;
         PageRouter.Navigate(PageIds.Launch);
         LauncherCommon.RunInNewThread(
@@ -680,12 +678,6 @@ public partial class PageInstanceSetupViewModel : ViewModelBase
             },
             "Instance Auth Profile",
             ThreadPriority.BelowNormal);
-    }
-
-    public static bool CanCreateOtherProfile()
-    {
-        // 自建构建不限制第三方 / 离线档案的创建
-        return true;
     }
 
     public async Task<bool> ApplyRendererAsync(int index)

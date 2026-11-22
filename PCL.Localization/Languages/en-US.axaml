@@ -1693,7 +1693,6 @@
     <sys:String x:Key="Launch.Account.Profile.ImportExport">Import / Export</sys:String>
     <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Message">No Microsoft login Client ID (CID) is configured.&#xA;&#xA;Please enter your CID in Settings → Launch → Microsoft login Client ID before creating or using a Microsoft profile.</sys:String>
     <sys:String x:Key="Launch.Account.Profile.MsClientIdRequired.Title">Client ID not configured</sys:String>
-    <sys:String x:Key="Launch.Account.Profile.RequireMicrosoftHint">A Microsoft profile is required to create profiles using other login types</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Saved">Profile saved!</sys:String>
     <sys:String x:Key="Launch.Account.Profile.SelectHint">Select a profile before launching the game</sys:String>
     <sys:String x:Key="Launch.Account.Profile.Uuid.ChangeTitle">Change UUID for profile {0}</sys:String>
