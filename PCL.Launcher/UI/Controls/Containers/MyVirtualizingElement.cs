@@ -13,7 +13,9 @@ public class MyVirtualizingElement : Control
 {
     private readonly Func<Control> _initializer;
     private bool _isAttached;
+    private bool _layoutSubscribed;
     private Control? _realControl;
+    private bool _scrollSubscribed;
     private ScrollViewer? _viewer;
 
     public MyVirtualizingElement(Func<Control> initializer)
@@ -22,20 +24,30 @@ public class MyVirtualizingElement : Control
         AttachedToVisualTree += (_, _) =>
         {
             _isAttached = true;
-            LayoutUpdated += OnLayoutUpdated;
             _viewer = this.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault();
-            if (_viewer is not null)
-                _viewer.ScrollChanged += OnScrollChanged;
+            UpdateMonitoring();
         };
         DetachedFromVisualTree += (_, _) =>
         {
             _isAttached = false;
-            LayoutUpdated -= OnLayoutUpdated;
-            if (_viewer is not null)
+            if (_layoutSubscribed)
+            {
+                LayoutUpdated -= OnLayoutUpdated;
+                _layoutSubscribed = false;
+            }
+
+            if (_viewer is not null && _scrollSubscribed)
+            {
                 _viewer.ScrollChanged -= OnScrollChanged;
+                _scrollSubscribed = false;
+            }
+
             _viewer = null;
         };
     }
+
+    /// <summary>实例化后的真实控件；尚未实例化时为 <see langword="null" />。</summary>
+    public Control? RealControl => _realControl;
 
     /// <summary>是否在离屏后回收真实控件。默认关闭，保持原有懒加载行为。</summary>
     public bool RecycleOffscreen { get; set; }
@@ -63,7 +75,37 @@ public class MyVirtualizingElement : Control
             panel.Children.Insert(index, element);
         }
 
+        UpdateMonitoring();
         return element;
+    }
+
+    /// <summary>
+    ///     按当前状态挂载/卸载监视事件：占位控件需要布局与滚动事件来判断进入视口；
+    ///     实例化后的控件只有在启用回收时才继续监听滚动，避免每个列表项持续参与 O(N) 扫描。
+    /// </summary>
+    private void UpdateMonitoring()
+    {
+        var needLayout = _isAttached && _realControl is null;
+        if (needLayout != _layoutSubscribed)
+        {
+            if (needLayout)
+                LayoutUpdated += OnLayoutUpdated;
+            else
+                LayoutUpdated -= OnLayoutUpdated;
+            _layoutSubscribed = needLayout;
+        }
+
+        var needScroll = _isAttached
+            && _viewer is not null
+            && (_realControl is null || RecycleOffscreen);
+        if (needScroll != _scrollSubscribed && _viewer is not null)
+        {
+            if (needScroll)
+                _viewer.ScrollChanged += OnScrollChanged;
+            else
+                _viewer.ScrollChanged -= OnScrollChanged;
+            _scrollSubscribed = needScroll;
+        }
     }
 
     private void OnLayoutUpdated(object? sender, EventArgs e)
@@ -86,19 +128,14 @@ public class MyVirtualizingElement : Control
         {
             if (RecycleOffscreen && viewer is not null && IsFarOutside(viewer, _realControl))
                 Recycle();
+            UpdateMonitoring();
             return;
         }
 
         if (Bounds.Width <= 0.5d || Bounds.Height <= 0.5d)
             return;
 
-        if (viewer is null)
-        {
-            Init();
-            return;
-        }
-
-        if (IsVisibleIn(viewer, this))
+        if (viewer is null || IsVisibleIn(viewer, this))
             Init();
     }
 
