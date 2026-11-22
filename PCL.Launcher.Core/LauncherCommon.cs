@@ -240,7 +240,29 @@ public static class LauncherCommon
 
     public static int Dpi { get; set; } = 96;
 
-    public static string VersionBranchName => "Release";
+#if DEBUG
+    public const string VersionBranchName = "Debug";
+#elif DEBUGCI
+    public const string VersionBranchName = "CI";
+#else
+    public const string VersionBranchName = "Publish";
+#endif
+
+    /// <summary>供界面展示的版本名，例如 <c>2.17.0 Beta 1</c>。</summary>
+    public static string VersionDisplayName
+    {
+        get
+        {
+            var version = Basics.Metadata.Version;
+            if (string.IsNullOrWhiteSpace(version.Suffix)) return version.BaseVersion;
+            var suffix = string.Join(
+                ' ',
+                version.Suffix
+                    .Split(['.', '-'], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
+            return $"{version.BaseVersion} {suffix}";
+        }
+    }
 
     public enum ProcessReturnValues
     {

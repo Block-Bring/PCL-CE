@@ -16,10 +16,10 @@
         <Platforms>AnyCPU;x64;ARM64</Platforms>
         <PlatformTarget>$(Platform)</PlatformTarget>
         <NoWarn>$(NoWarn);CS9113</NoWarn>
-        <Version>2.16.2</Version>
-        <AssemblyVersion>2.16.2.0</AssemblyVersion>
-        <FileVersion>2.16.2.0</FileVersion>
-        <InformationalVersion>2.16.2</InformationalVersion>
+        <Version>2.17.0</Version>
+        <AssemblyVersion>2.17.0.0</AssemblyVersion>
+        <FileVersion>2.17.0.0</FileVersion>
+        <InformationalVersion>2.17.0-beta.2</InformationalVersion>
         <ApplicationIcon>Assets/Images/icon.ico</ApplicationIcon>
         <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
@@ -47,6 +47,9 @@
         </EmbeddedResource>
         <EmbeddedResource Include="Resources\hints\*.txt">
             <LogicalName>PCL.Resources.hints.%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="Assets\CHANGELOG.md">
+            <LogicalName>PCL.CHANGELOG.md</LogicalName>
         </EmbeddedResource>
     </ItemGroup>
     <ItemGroup>

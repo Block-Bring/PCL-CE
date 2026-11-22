@@ -21,6 +21,7 @@ public sealed class StartupEffects(
     ExtraButtonsPanel extraButtons)
 {
     private bool _hasRun;
+    private bool _showUpdateLog;
 
     private static double WindowTargetOpacity =>
         Math.Clamp(Config.Preference.Theme.WindowOpacity / 1000d + 0.4d, 0.4d, 1d);
@@ -149,7 +150,7 @@ public sealed class StartupEffects(
             new ConfigObserver(ConfigEvent.Update, _ => background.ApplyPresentation()));
     }
 
-    private static void WarmupLoaders()
+    private void WarmupLoaders()
     {
         try
         {
@@ -165,11 +166,10 @@ public sealed class StartupEffects(
         try
         {
             var lastVersion = States.System.LastVersion;
-            if (lastVersion != Basics.VersionCode)
-            {
-                LogWrapper.Info("UI", $"版本号从 {lastVersion} 变更为 {Basics.VersionCode}");
-                States.System.LastVersion = Basics.VersionCode;
-            }
+            if (lastVersion < Basics.VersionCode)
+                UpgradeSub(lastVersion);
+            else if (lastVersion > Basics.VersionCode)
+                DowngradeSub(lastVersion);
         }
         catch (Exception ex)
         {
@@ -177,7 +177,68 @@ public sealed class StartupEffects(
         }
     }
 
-    private static async void ShowStartupDialogs()
+    // 升级与降级事件
+    private void UpgradeSub(int lastVersionCode)
+    {
+        LogWrapper.Info("UI", $"版本号从 {lastVersionCode} 升高到 {Basics.VersionCode}");
+        States.System.LastVersion = Basics.VersionCode;
+
+        // 重新询问是否启用遥测数据收集
+        if (lastVersionCode <= 511)
+        {
+            if (!Config.System.TelemetryConfig.IsDefault() && Config.System.Telemetry)
+            {
+                Config.System.TelemetryConfig.Reset();
+                LogWrapper.Info("UI", "遥测策略变更：由旧版本升级到含新版遥测的版本，已重置遥测设置");
+            }
+        }
+
+        // 检查有记录的最高版本号
+        var lowerVersionCode = UpdateManager.IsCurrentVersionBeta
+            ? States.System.LastBetaVersion
+            : States.System.LastAlphaVersion;
+        if (lowerVersionCode < Basics.VersionCode)
+        {
+            if (UpdateManager.IsCurrentVersionBeta)
+                States.System.LastBetaVersion = Basics.VersionCode;
+            else
+                States.System.LastAlphaVersion = Basics.VersionCode;
+            LogWrapper.Info("UI", $"最高版本号从 {lowerVersionCode} 升高到 {Basics.VersionCode}");
+        }
+
+        // 被移除的窗口设置选项 (Commit 3161488 2026/1/23)
+        if ((int)Config.Launch.GameWindowMode == 5)
+            Config.Launch.GameWindowMode = GameWindowSizeMode.Default;
+
+        // 更新后展示社区版提示（阻塞弹窗只能在后台线程等待）
+        Basics.RunInNewThread(UpdateManager.ShowCeAnnounce, "CE Announce");
+
+        // 输出更新日志
+        if (lastVersionCode <= 0) return;
+        if (lowerVersionCode >= Basics.VersionCode) return;
+        _showUpdateLog = true;
+
+        // 重置自定义主页配置
+        if (lastVersionCode < 521 && Config.Preference.Homepage.SelectedPreset >= 3)
+        {
+            Config.Preference.Homepage.SelectedPreset = 0;
+            DialogService.Instance.ShowNotification(
+                new TextDialogRequest
+                {
+                    Title = Lang.Text("Main.HomepageReset.Title"),
+                    Content = Lang.Text("Main.HomepageReset.Content"),
+                    Buttons = DialogButtons.Ok
+                });
+        }
+    }
+
+    private static void DowngradeSub(int lastVersionCode)
+    {
+        LogWrapper.Info("UI", $"版本号从 {lastVersionCode} 降低到 {Basics.VersionCode}");
+        States.System.LastVersion = Basics.VersionCode;
+    }
+
+    private async void ShowStartupDialogs()
     {
         try
         {
@@ -185,6 +246,7 @@ public sealed class StartupEffects(
             await ShowEnvironmentWarningAsync();
             await ShowEulaDialogAsync();
             await ShowTelemetryDialogAsync();
+            await ShowUpdateLogAsync();
             HardwareInfo.GetHardwareInfo();
         }
         catch (Exception ex)
@@ -300,6 +362,57 @@ public sealed class StartupEffects(
                 Buttons = DialogButtons.AgreeDecline
             })).Button;
         Config.System.TelemetryConfig.SetValue(button == 1, forceNewValue: true);
+    }
+
+    private async Task ShowUpdateLogAsync()
+    {
+        if (!_showUpdateLog) return;
+        _showUpdateLog = false;
+
+        try
+        {
+            var result = await DialogService.Instance.ShowAsync(
+                new MarkdownDialogRequest
+                {
+                    Title = Lang.Text(
+                        "Main.UpdateLog.Title",
+                        LauncherCommon.VersionBranchName,
+                        LauncherCommon.VersionDisplayName),
+                    Content = ReadChangelog(),
+                    Buttons = DialogButtons.From(
+                        DialogButton.Create(Lang.Text("Common.Action.Confirm")),
+                        DialogButton.Create(Lang.Text("Main.UpdateLog.FullChangelog")))
+                });
+            if (result.Button == 2)
+                OpenWebsite("https://github.com/Block-Bring/PCL-CE/releases");
+        }
+        catch (Exception ex)
+        {
+            LogWrapper.Warn(ex, "UI", "展示更新日志失败");
+        }
+    }
+
+    private static string ReadChangelog()
+    {
+        // 仅当临时目录中的日志确实对应当前版本时才使用它
+        var changelogFile = $"{LauncherPaths.Temp}CEUpdateLog.md";
+        var versionFile = $"{LauncherPaths.Temp}CEUpdateLog.version";
+        try
+        {
+            if (File.Exists(changelogFile) && File.Exists(versionFile)
+                && File.ReadAllText(versionFile).Trim() == LauncherCommon.VersionBaseName)
+                return File.ReadAllText(changelogFile);
+        }
+        catch (Exception ex)
+        {
+            LogWrapper.Warn(ex, "UI", "读取更新日志失败");
+        }
+
+        using var stream = typeof(StartupEffects).Assembly.GetManifestResourceStream("PCL.CHANGELOG.md");
+        if (stream is null) return Lang.Text("Main.UpdateLog.Empty");
+        using var reader = new StreamReader(stream);
+        var bundled = reader.ReadToEnd();
+        return string.IsNullOrWhiteSpace(bundled) ? Lang.Text("Main.UpdateLog.Empty") : bundled;
     }
 
     private static void OpenWebsite(string url)
