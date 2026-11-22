@@ -4,6 +4,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using PCL.Core.App;
 using PCL.Core.App.Localization;
 using PCL.Core.UI;
@@ -25,6 +26,15 @@ public partial class PageInstanceCompResource
     : MyPageRight, IPageView, IRefreshable, ICompLocalPage
 {
     private readonly Comp.CompType _compType;
+
+    private readonly Dictionary<
+        LocalComp.LocalCompFile,
+        WeakReference<MyLocalModItem>> _entryItems = [];
+
+    private readonly Dictionary<
+        LocalComp.LocalCompFile,
+        LocalComp.LocalCompFile.OnCompUpdateEventHandler> _entryUpdateHandlers = [];
+
     private readonly DispatcherTimer _searchTimer;
     private readonly ResourceSwipeSelector _swipeSelector;
 
@@ -181,7 +191,7 @@ public partial class PageInstanceCompResource
         PanSelect.CancelButton.Click += (_, _) =>
         {
             ViewModel.ClearSelection();
-            BuildList();
+            RefreshSelectionUi();
         };
 
         AddHandler(
@@ -194,7 +204,7 @@ public partial class PageInstanceCompResource
                 if (SearchBox.IsKeyboardFocusWithin && !string.IsNullOrEmpty(SearchBox.Text))
                     return;
                 ViewModel.SetAllSelected(true);
-                BuildList();
+                RefreshSelectionUi();
                 e.Handled = true;
             },
             RoutingStrategies.Tunnel);
@@ -579,13 +589,22 @@ public partial class PageInstanceCompResource
             _swipeSelector.Cancel();
             ViewModel.RebuildVisibleEntries();
             PanList.Children.Clear();
-            foreach (var placeholder in ViewModel.VisibleEntries.Select(entry =>
-                         new MyVirtualizingElement<MyLocalModItem>(() => CreateEntryItem(entry))
-                         {
-                             Height = 44d,
-                             RecycleOffscreen = true
-                         }))
+            SubscribeEntryUpdates(ViewModel.VisibleEntries);
+            foreach (var entry in ViewModel.VisibleEntries)
+            {
+                var placeholder = new MyVirtualizingElement<MyLocalModItem>(
+                    () => CreateEntryItem(entry))
+                {
+                    Height = 44d,
+                    RecycleOffscreen = true
+                };
+                placeholder.Recycled += item =>
+                {
+                    foreach (var image in item.GetVisualDescendants().OfType<MyImage>())
+                        image.Unload();
+                };
                 PanList.Children.Add(placeholder);
+            }
 
             PanListBack.Opacity = 1d;
             BtnManageBack.IsVisible = !string.IsNullOrEmpty(_currentFolderPath);
@@ -595,6 +614,30 @@ public partial class PageInstanceCompResource
         finally
         {
             _isBuilding = false;
+        }
+    }
+
+    /// <summary>
+    ///     每个资源只注册一次更新回调：列表项被回收重建时仅替换弱引用目标，
+    ///     避免委托随滚动次数无限累积。
+    /// </summary>
+    private void SubscribeEntryUpdates(IReadOnlyList<LocalComp.LocalCompFile> entries)
+    {
+        foreach (var (entry, handler) in _entryUpdateHandlers)
+            entry.OnCompUpdate -= handler;
+        _entryUpdateHandlers.Clear();
+        _entryItems.Clear();
+
+        foreach (var entry in entries)
+        {
+            LocalComp.LocalCompFile.OnCompUpdateEventHandler handler = _ =>
+            {
+                if (_entryItems.TryGetValue(entry, out var weak)
+                    && weak.TryGetTarget(out var target))
+                    LauncherCommon.RunInUi(target.Refresh);
+            };
+            _entryUpdateHandlers[entry] = handler;
+            entry.OnCompUpdate += handler;
         }
     }
 
@@ -645,12 +688,7 @@ public partial class PageInstanceCompResource
             AllowFolderNavigation = true,
             PathHint = GetPathHint(entry)
         };
-        var weakItem = new WeakReference<MyLocalModItem>(item);
-        entry.OnCompUpdate += _ =>
-        {
-            if (weakItem.TryGetTarget(out var target))
-                LauncherCommon.RunInUi(target.Refresh);
-        };
+        _entryItems[entry] = new WeakReference<MyLocalModItem>(item);
 
         item.CheckedChanged += (_, value) =>
         {
@@ -777,7 +815,16 @@ public partial class PageInstanceCompResource
     private void ToggleSelectAll()
     {
         ViewModel.ToggleSelectAll();
-        BuildList();
+        RefreshSelectionUi();
+    }
+
+    /// <summary>只同步已实例化的列表项与选择栏，选择变化不重建列表。</summary>
+    private void RefreshSelectionUi()
+    {
+        foreach (var child in PanList.Children)
+            if (child is MyVirtualizingElement { RealControl: MyLocalModItem item })
+                item.SetChecked(ViewModel.IsSelected(item.Entry), false);
+        RefreshSelectBar();
     }
 
     private void SetSelectedEnabled(bool enabled)

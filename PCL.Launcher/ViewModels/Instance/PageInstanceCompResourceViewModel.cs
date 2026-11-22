@@ -33,6 +33,8 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
 
     private readonly LocalCompSelectionState _selection = new();
 
+    private HashSet<string> _duplicateIds = new(StringComparer.OrdinalIgnoreCase);
+
     private int _filterAllCount;
     private int _filterDisabledCount;
     private int _filterDuplicateCount;
@@ -296,13 +298,13 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
 
         var scope = FilterBySearch(source);
         _searchScope = scope;
+        RefreshDuplicateIds(scope);
         var filtered = scope.Where(MatchFilter).ToList();
         SortEntries(filtered);
-        _selection.RemoveWhere(path =>
-            !filtered.Any(entry => string.Equals(
-                entry.RawPath,
-                path,
-                StringComparison.OrdinalIgnoreCase)));
+        var visiblePaths = filtered
+            .Select(entry => entry.RawPath)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _selection.RemoveWhere(path => !visiblePaths.Contains(path));
 
         VisibleEntries.Clear();
         VisibleEntries.AddRange(filtered);
@@ -409,15 +411,20 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
         };
     }
 
-    private bool IsDuplicate(
-        LocalComp.LocalCompFile entry,
-        IReadOnlyList<LocalComp.LocalCompFile>? source = null)
+    private bool IsDuplicate(LocalComp.LocalCompFile entry)
     {
-        return entry.Comp is not null
-            && (source ?? _searchScope).Any(other =>
-                !ReferenceEquals(other, entry)
-                && other.Comp is not null
-                && string.Equals(other.Comp.Id, entry.Comp.Id, StringComparison.OrdinalIgnoreCase));
+        return entry.Comp is not null && _duplicateIds.Contains(entry.Comp.Id);
+    }
+
+    /// <summary>一次遍历统计重复的资源 ID，供筛选与计数复用，避免逐项全表比较。</summary>
+    private void RefreshDuplicateIds(IReadOnlyList<LocalComp.LocalCompFile> scope)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var duplicates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in scope)
+            if (entry.Comp is not null && !seen.Add(entry.Comp.Id))
+                duplicates.Add(entry.Comp.Id);
+        _duplicateIds = duplicates;
     }
 
     private void SortEntries(List<LocalComp.LocalCompFile> list)
@@ -477,6 +484,8 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
         var scope = source ?? _searchScope;
         if (scope.Count == 0 && source is null)
             scope = [.. GetFolderEntries()];
+        if (source is null)
+            RefreshDuplicateIds(scope);
 
         var all = scope.Count;
         var enabled = scope.Count(entry =>
@@ -486,7 +495,7 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
         var updatable = scope.Count(entry => entry.CanUpdate);
         var error = scope.Count(entry =>
             entry.State == LocalComp.LocalCompFile.LocalFileStatus.Unavailable);
-        var duplicate = scope.Count(entry => IsDuplicate(entry, scope));
+        var duplicate = scope.Count(IsDuplicate);
 
         _filterAllCount = all;
         _filterEnabledCount = enabled;
@@ -557,7 +566,8 @@ public partial class PageInstanceCompResourceViewModel : ViewModelBase
                 _selection.Add(entry.RawPath);
             else
                 _selection.Remove(entry.RawPath);
-        RebuildVisibleEntries();
+        // 选择不改变可见集合，无需重跑筛选与排序。
+        UpdateSelectionState();
     }
 
     public void SetSelectedEnabled(bool enabled)
