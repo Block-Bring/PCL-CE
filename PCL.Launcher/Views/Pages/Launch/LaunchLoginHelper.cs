@@ -288,10 +288,12 @@ public static class LaunchLoginHelper
         if (File.Exists(cacheFile) && new FileInfo(cacheFile).Length > 0L)
             return cacheFile;
 
+        // 第三方 Yggdrasil 的会话服固定在 API 根下的 sessionserver 段，
+        // 只去掉 /authserver 会拼出 .../api/yggdrasil/session/... 这类 404 地址。
         var baseUrl = profile.ProfileType switch
         {
             ProfileType.Authlib or ProfileType.YggdrasilConnect when !string.IsNullOrEmpty(profile.Server) =>
-                profile.Server.Replace("/authserver", ""),
+                profile.Server.Replace("/authserver", "").TrimEnd('/') + "/sessionserver",
             _ => "https://sessionserver.mojang.com"
         };
         var url = $"{baseUrl.TrimEnd('/')}/session/minecraft/profile/{profile.Uuid}";
