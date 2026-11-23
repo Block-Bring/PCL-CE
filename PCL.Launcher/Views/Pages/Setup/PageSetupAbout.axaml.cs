@@ -42,6 +42,9 @@ public partial class PageSetupAbout : MyPageRight
         BtnPysioBlog.Click += (_, _) => Basics.OpenPath("https://www.pysio.online");
         BtnYunmoanWebsite.Click += (_, _) => Basics.OpenPath("https://www.zyghit.cn");
         BtnEasyTierWebsite.Click += (_, _) => Basics.OpenPath("https://easytier.cn");
+        BtnBranchDeveloperGitHub.Click +=
+            (_, _) => Basics.OpenPath("https://github.com/Block-Bring/PCL-CE");
+        ImgBranchDeveloper.LoadingSource = string.Empty;
 
         Loaded += (_, _) =>
         {

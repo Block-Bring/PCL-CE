@@ -268,6 +268,20 @@ public partial class PageSetupAboutViewModel : ViewModelBase
                 });
         }
 
+        var selfIndex = result.FindIndex(contributor =>
+            string.Equals(contributor.Login, "Block-Bring", StringComparison.OrdinalIgnoreCase));
+        var self = selfIndex >= 0
+            ? result[selfIndex]
+            : new GitHubContributor
+            {
+                Login = "Block-Bring",
+                AvatarUrl = "https://github.com/Block-Bring.png",
+                HtmlUrl = "https://github.com/Block-Bring"
+            };
+        if (selfIndex >= 0)
+            result.RemoveAt(selfIndex);
+        result.Insert(0, self);
+
         return result;
     }
 

@@ -15,7 +15,7 @@
                        Title="{loc:Loc Setup.About.Title}">
                 <Grid Margin="21,40,21,16"
                       ColumnDefinitions="40,*,150"
-                      RowDefinitions="45,45,45">
+                      RowDefinitions="45,45,45,45">
                     <ui:MyImage Grid.Row="0"
                                 Width="34"
                                 Height="34"
@@ -76,6 +76,27 @@
                                  Grid.Column="2"
                                  Height="35"
                                  Text="{loc:Loc Setup.About.SourceCode}" />
+
+                    <ui:MyImage x:Name="ImgBranchDeveloper"
+                                Grid.Row="3"
+                                Width="34"
+                                Height="34"
+                                Margin="3"
+                                CornerRadius="17"
+                                VerticalAlignment="Center"
+                                Source="https://github.com/Block-Bring.png?size=200"
+                                FallbackSource="https://ghproxy.net/https://github.com/Block-Bring.png?size=200" />
+                    <ui:MyListItem Grid.Row="3"
+                                   Grid.Column="1"
+                                   Margin="-5,0,15,0"
+                                   IsHitTestVisible="False"
+                                   Info="此 Plain Craft Launcher Community Edition 分支的开发者"
+                                   Title="方生布灵" />
+                    <ui:MyButton x:Name="BtnBranchDeveloperGitHub"
+                                 Grid.Row="3"
+                                 Grid.Column="2"
+                                 Height="35"
+                                 Text="GitHub" />
                 </Grid>
             </ui:MyCard>
 
