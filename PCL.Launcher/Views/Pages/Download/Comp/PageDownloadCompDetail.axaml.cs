@@ -28,6 +28,7 @@ public partial class PageDownloadCompDetail : MyPageRight
 
     /// <summary>资源下载页「按实例」筛选选中的实例；非空时保存直接使用该实例，跳过选择存放位置。</summary>
     private McInstance? _filterInstance;
+    private LocalComp.LocalCompFile? _replaceEntry;
 
     public PageDownloadCompDetail()
     {
@@ -116,6 +117,9 @@ public partial class PageDownloadCompDetail : MyPageRight
     {
         _filterInstance = parameter is CompDetailParameter { FilterInstance: { } filterInstance }
             ? filterInstance
+            : null;
+        _replaceEntry = parameter is CompDetailParameter { ReplaceEntry: { } replaceEntry }
+            ? replaceEntry
             : null;
         var applied = parameter switch
         {
@@ -529,9 +533,13 @@ public partial class PageDownloadCompDetail : MyPageRight
         saveButton.SetLocalizedValue(ToolTip.TipProperty, "Download.Version.SaveAs");
         saveButton.Click += async (_, _) => await SaveFileAsync(file);
 
+        var replaceButton = _replaceEntry is not null ? CreateReplaceButton(file) : null;
+
         if (action == CompFileAction.Save)
         {
-            item.Buttons = [saveButton];
+            item.Buttons = replaceButton is not null
+                ? [replaceButton, saveButton]
+                : [saveButton];
             item.Click += async (_, _) => await SaveFileAsync(file);
             return item;
         }
@@ -542,9 +550,22 @@ public partial class PageDownloadCompDetail : MyPageRight
         };
         installButton.SetLocalizedValue(ToolTip.TipProperty, "Common.Action.Install");
         installButton.Click += async (_, _) => await RunInstallAsync(action, file);
-        item.Buttons = [installButton, saveButton];
+        item.Buttons = replaceButton is not null
+            ? [replaceButton, installButton, saveButton]
+            : [installButton, saveButton];
         item.Click += async (_, _) => await RunInstallAsync(action, file);
         return item;
+    }
+
+    private MyIconButton CreateReplaceButton(Comp.CompFile file)
+    {
+        var button = new MyIconButton
+        {
+            SvgIcon = "lucide/arrow-right-left"
+        };
+        button.SetLocalizedValue(ToolTip.TipProperty, "Instance.Resource.Version.Replace");
+        button.Click += async (_, _) => await ReplaceToInstanceAsync(file);
+        return button;
     }
 
     private Task RunInstallAsync(CompFileAction action, Comp.CompFile file)
@@ -665,6 +686,52 @@ public partial class PageDownloadCompDetail : MyPageRight
                 LauncherLogLevel.Feedback,
                 userSummary: Lang.Text("Download.Comp.Error.OperationFailed"));
         }
+    }
+
+    private Task ReplaceToInstanceAsync(Comp.CompFile file)
+    {
+        try
+        {
+            if (_replaceEntry is not { } entry || ViewModel.Project is not { } project)
+                return Task.CompletedTask;
+
+            var folder = Path.GetDirectoryName(entry.path);
+            if (string.IsNullOrEmpty(folder))
+                return Task.CompletedTask;
+
+            var fileName = string.IsNullOrEmpty(file.FileName)
+                ? Comp.CompFileNameGet(project, file)
+                : file.FileName;
+            var target = Path.GetFullPath(Path.Combine(folder, fileName));
+
+            StartDownloadTask(
+                file,
+                target,
+                Comp.GetCompTypeName(file.Type),
+                $"CompDetail:Replace:{target}",
+                true,
+                () =>
+                {
+                    if (!File.Exists(target)) return;
+                    foreach (var variant in new[]
+                             {
+                                 entry.path,
+                                 $"{entry.path}.disabled",
+                                 $"{entry.path}.old"
+                             })
+                        if (File.Exists(variant)
+                            && !string.Equals(variant, target, StringComparison.OrdinalIgnoreCase))
+                            LocalCompFileOperations.DeleteFileToRecycleBin(variant);
+                });
+
+            PageRouter.Navigate(PageIds.TaskManager);
+        }
+        catch (Exception ex)
+        {
+            LauncherCommon.Log(ex, "替换资源文件失败", LauncherLogLevel.Feedback);
+        }
+
+        return Task.CompletedTask;
     }
 
     private static string BuildSaveFilter(Comp.CompFile file, string desc)

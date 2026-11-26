@@ -1309,6 +1309,7 @@
     <sys:String x:Key="Instance.Resource.Update.Failed">资源更新失败：{0}</sys:String>
     <sys:String x:Key="Instance.Resource.Update.SuccessMultiple">已成功更新 {0} 个资源！</sys:String>
     <sys:String x:Key="Instance.Resource.Update.SuccessSingle">已成功更新 {0}！</sys:String>
+    <sys:String x:Key="Instance.Resource.Version.Replace">替换</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Task.DownloadFiles">下载新版资源文件</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Task.ReplaceFiles">替换旧版资源文件</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Task.Title">资源更新：{0}</sys:String>

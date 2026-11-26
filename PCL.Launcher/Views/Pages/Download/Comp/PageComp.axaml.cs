@@ -554,4 +554,5 @@ public sealed record CompDetailParameter(
     Comp.CompType TargetType,
     string? TargetGameVersion,
     Comp.CompLoaderType TargetModLoader,
-    McInstance? FilterInstance = null);
+    McInstance? FilterInstance = null,
+    LocalComp.LocalCompFile? ReplaceEntry = null);

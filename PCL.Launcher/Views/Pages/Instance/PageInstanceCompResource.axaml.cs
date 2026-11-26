@@ -924,7 +924,9 @@ public partial class PageInstanceCompResource
                     entry.Comp,
                     _compType,
                     instance?.Info.VanillaName,
-                    loader));
+                    loader,
+                    instance,
+                    entry));
             return;
         }
 

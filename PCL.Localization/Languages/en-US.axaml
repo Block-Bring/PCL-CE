@@ -1309,6 +1309,7 @@
     <sys:String x:Key="Instance.Resource.Update.Failed">Resource update failed: {0}</sys:String>
     <sys:String x:Key="Instance.Resource.Update.SuccessMultiple">Successfully updated {0} resources!</sys:String>
     <sys:String x:Key="Instance.Resource.Update.SuccessSingle">Successfully updated {0}!</sys:String>
+    <sys:String x:Key="Instance.Resource.Version.Replace">Replace</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Task.DownloadFiles">Download updated resource files</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Task.ReplaceFiles">Replace old resource files</sys:String>
     <sys:String x:Key="Instance.Resource.Update.Task.Title">Update resources: {0}</sys:String>
