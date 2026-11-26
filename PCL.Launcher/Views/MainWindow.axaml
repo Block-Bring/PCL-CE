@@ -82,7 +82,7 @@
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
                                       HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Hidden"
                                       BringIntoViewOnFocusChange="False">
                             <Panel x:Name="PanDialogHost"
                                    HorizontalAlignment="Stretch"

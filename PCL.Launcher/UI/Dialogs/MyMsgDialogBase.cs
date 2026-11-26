@@ -26,6 +26,7 @@ public abstract class MyMsgDialogBase : UserControl
 
     private readonly MyScrollViewer _bodyScroll;
     private readonly MyButton[] _buttons;
+    private readonly Border _card;
 
     private readonly ContentControl _footerHost = new()
     {
@@ -125,7 +126,7 @@ public abstract class MyMsgDialogBase : UserControl
         main.Children.Add(_footerHost);
         main.Children.Add(panBtn);
 
-        var card = new Border
+        _card = new Border
         {
             CornerRadius = new CornerRadius(DialogTheme.CardCornerRadius),
             BorderThickness = new Thickness(0d),
@@ -133,7 +134,7 @@ public abstract class MyMsgDialogBase : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Child = main
         };
-        DialogTheme.BindBrush(card, Border.BackgroundProperty, "ColorBrushBackground");
+        DialogTheme.BindBrush(_card, Border.BackgroundProperty, "ColorBrushBackground");
 
         var root = new Grid
         {
@@ -142,7 +143,7 @@ public abstract class MyMsgDialogBase : UserControl
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch
         };
-        root.Children.Add(card);
+        root.Children.Add(_card);
         Content = root;
 
         RenderTransformOrigin = new RelativePoint(0d, 0.5d, RelativeUnit.Relative);
@@ -167,7 +168,17 @@ public abstract class MyMsgDialogBase : UserControl
     private void _OnDialogLoaded(object? sender, RoutedEventArgs e)
     {
         Loaded -= _OnDialogLoaded;
+        ClampCardHeight();
         PlayEnterAnimation();
+    }
+
+    /// <summary>限制卡片最大高度，使正文超高时在内部滚动，而非拉长整个弹窗。</summary>
+    private void ClampCardHeight()
+    {
+        if (TopLevel.GetTopLevel(this) is not { } top) return;
+
+        var available = top.ClientSize.Height - 50d; // 减去 root 上下各 25 的外边距
+        if (available > 0d) _card.MaxHeight = available;
     }
 
     public void PlayEnterAnimation()
