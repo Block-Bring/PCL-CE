@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using PCL.Core.App;
 using PCL.Core.App.Configuration;
+using PCL.Core.App.Essentials;
 using PCL.Core.App.Localization;
 using PCL.Core.Logging;
 using PCL.Core.Platform;
@@ -170,6 +171,13 @@ public sealed class StartupEffects(
                 UpgradeSub(lastVersion);
             else if (lastVersion > Basics.VersionCode)
                 DowngradeSub(lastVersion);
+
+#if DEBUG
+            var (hasUpdateLogArg, updateLogArgValid) =
+                StartupService.CommandLine.TryGetArgumentValue<bool>("update-log", out var updateLogArg);
+            if (hasUpdateLogArg && updateLogArgValid)
+                _showUpdateLog = updateLogArg == true;
+#endif
         }
         catch (Exception ex)
         {
