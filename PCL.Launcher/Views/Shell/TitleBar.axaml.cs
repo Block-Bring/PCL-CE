@@ -350,7 +350,7 @@ public partial class TitleBar : UserControl
                 TabSelectionIndicator,
                 delta,
                 240,
-                ease: new FluentEaseOut(EasePower.Weak)),
+                ease: new FluentEaseInOut(EasePower.Middle)),
             "TitleBar Tab Indicator");
     }
 
